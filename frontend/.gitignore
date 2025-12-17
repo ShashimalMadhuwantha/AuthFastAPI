@@ -1,0 +1,58 @@
+# Node modules (if any)
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+
+# Git
+.gitattributes
+
+# Documentation (optional - uncomment if needed)
+# *.md
+# !README.md
+
+# Docker - only ignore override file
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Build outputs (if any)
+dist/
+build/
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Misc
+.nginx/

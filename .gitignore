@@ -1,0 +1,71 @@
+# Docker runtime data
+postgres_data/
+*.sql
+*.dump
+
+# Docker Compose - only ignore override
+docker-compose.override.yml
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Git
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+.venv/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+dist/
+build/
+
+# Coverage
+coverage/
+*.lcov
+htmlcov/
+
+# Testing
+.pytest_cache/
+.tox/
+
+# Misc
+.DS_Store

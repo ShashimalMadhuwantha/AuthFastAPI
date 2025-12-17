@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SenseGrid</title>
+    <meta name="description"
+        content="Welcome to your SenseGrid dashboard. Manage your account and access all features.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { "50": "#eff6ff", "100": "#dbeafe", "200": "#bfdbfe", "300": "#93c5fd", "400": "#60a5fa", "500": "#3b82f6", "600": "#2563eb", "700": "#1d4ed8", "800": "#1e40af", "900": "#1e3a8a", "950": "#172554" }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 antialiased">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="dashboard.html" class="flex items-center space-x-3">
+                <img src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg" class="h-8"
+                    alt="SenseGrid Logo">
+                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">SenseGrid</span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-700 dark:text-gray-300">Welcome, <span id="usernameDisplay"
+                        class="font-semibold"></span></span>
+                <button onclick="handleLogout()"
+                    class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-screen-xl mx-auto p-6">
+        <!-- Welcome Section -->
+        <div class="gradient-card rounded-lg p-8 mb-6 text-white fade-in">
+            <h1 class="text-3xl font-bold mb-2">Welcome to SenseGrid Dashboard</h1>
+            <p class="text-lg opacity-90">Manage your account and explore our features</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- Stat Card 1 -->
+            <div class="stat-card bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in"
+                style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Total Projects</h3>
+                    <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-gray-900 dark:text-white">12</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">+3 from last month</p>
+            </div>
+
+            <!-- Stat Card 2 -->
+            <div class="stat-card bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in"
+                style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Active Tasks</h3>
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                        </path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-gray-900 dark:text-white">28</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">7 completed today</p>
+            </div>
+
+            <!-- Stat Card 3 -->
+            <div class="stat-card bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in"
+                style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Team Members</h3>
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-gray-900 dark:text-white">8</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">2 new this week</p>
+            </div>
+        </div>
+
+        <!-- User Profile Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in" style="animation-delay: 0.4s">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Your Profile</h2>
+
+            <div id="profileLoading" class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">Loading profile...</p>
+            </div>
+
+            <div id="profileContent" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
+                        <p id="profileUsername" class="text-lg font-semibold text-gray-900 dark:text-white"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                        <p id="profileEmail" class="text-lg font-semibold text-gray-900 dark:text-white"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Account
+                            Created</label>
+                        <p id="profileCreated" class="text-lg font-semibold text-gray-900 dark:text-white"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last
+                            Updated</label>
+                        <p id="profileUpdated" class="text-lg font-semibold text-gray-900 dark:text-white"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="profileError"
+                class="hidden p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
+                <span class="font-medium">Error!</span> <span id="profileErrorText"></span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check if user is logged in
+        function checkAuth() {
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+            const username = localStorage.getItem('username') || sessionStorage.getItem('username');
+
+            if (!token || !username) {
+                window.location.href = 'index.html';
+                return null;
+            }
+
+            document.getElementById('usernameDisplay').textContent = username;
+            return { token, username };
+        }
+
+        // Load user profile
+        async function loadProfile() {
+            const auth = checkAuth();
+            if (!auth) return;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/api/v1/auth/users/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${auth.token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+
+                    // Display profile data
+                    document.getElementById('profileUsername').textContent = userData.username;
+                    document.getElementById('profileEmail').textContent = userData.email;
+                    document.getElementById('profileCreated').textContent = new Date(userData.created_at).toLocaleDateString();
+                    document.getElementById('profileUpdated').textContent = new Date(userData.updated_at).toLocaleDateString();
+
+                    // Show profile content
+                    document.getElementById('profileLoading').classList.add('hidden');
+                    document.getElementById('profileContent').classList.remove('hidden');
+                } else {
+                    throw new Error('Failed to load profile');
+                }
+            } catch (error) {
+                console.error('Profile loading error:', error);
+                document.getElementById('profileLoading').classList.add('hidden');
+                document.getElementById('profileErrorText').textContent = 'Failed to load profile data';
+                document.getElementById('profileError').classList.remove('hidden');
+            }
+        }
+
+        // Handle logout
+        function handleLogout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('username');
+            sessionStorage.removeItem('access_token');
+            sessionStorage.removeItem('username');
+            window.location.href = 'index.html';
+        }
+
+        // Initialize dashboard
+        window.addEventListener('DOMContentLoaded', () => {
+            loadProfile();
+        });
+    </script>
+</body>
+
+</html>
