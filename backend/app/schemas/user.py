@@ -16,6 +16,12 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
+class UserUpdate(BaseModel):
+    """Schema for user update (all fields optional)"""
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(None, min_length=6)
+
 class UserResponse(UserBase):
     """Schema for user response (excludes password)"""
     id: int

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import auth
+from app.api.v1 import auth, users
 from app.db.database import engine, Base
 from app.core.logger import logger
 
@@ -26,6 +26,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["User Management"])
 
 logger.info("FastAPI application started successfully")
 

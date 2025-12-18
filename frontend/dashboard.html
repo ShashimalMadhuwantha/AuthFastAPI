@@ -36,15 +36,6 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .stat-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -73,6 +64,10 @@
                 <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">SenseGrid</span>
             </a>
             <div class="flex items-center space-x-4">
+                <a href="users-dashboard.html"
+                    class="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">
+                    Manage Users
+                </a>
                 <span class="text-sm text-gray-700 dark:text-gray-300">Welcome, <span id="usernameDisplay"
                         class="font-semibold"></span></span>
                 <button onclick="handleLogout()"
@@ -91,56 +86,8 @@
             <p class="text-lg opacity-90">Manage your account and explore our features</p>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <!-- Stat Card 1 -->
-            <div class="stat-card bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in"
-                style="animation-delay: 0.1s">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Total Projects</h3>
-                    <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                        </path>
-                    </svg>
-                </div>
-                <p class="text-3xl font-bold text-gray-900 dark:text-white">12</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">+3 from last month</p>
-            </div>
-
-            <!-- Stat Card 2 -->
-            <div class="stat-card bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in"
-                style="animation-delay: 0.2s">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Active Tasks</h3>
-                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                        </path>
-                    </svg>
-                </div>
-                <p class="text-3xl font-bold text-gray-900 dark:text-white">28</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">7 completed today</p>
-            </div>
-
-            <!-- Stat Card 3 -->
-            <div class="stat-card bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in"
-                style="animation-delay: 0.3s">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Team Members</h3>
-                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
-                        </path>
-                    </svg>
-                </div>
-                <p class="text-3xl font-bold text-gray-900 dark:text-white">8</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">2 new this week</p>
-            </div>
-        </div>
-
         <!-- User Profile Section -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in" style="animation-delay: 0.4s">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 fade-in" style="animation-delay: 0.2s">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Your Profile</h2>
 
             <div id="profileLoading" class="text-center py-8">
@@ -178,6 +125,7 @@
         </div>
     </main>
 
+    <script src="config.js"></script>
     <script>
         // Check if user is logged in
         function checkAuth() {
@@ -199,7 +147,7 @@
             if (!auth) return;
 
             try {
-                const response = await fetch(`http://127.0.0.1:8000/api/v1/auth/users/me`, {
+                const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.USERS_ME), {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${auth.token}`,
