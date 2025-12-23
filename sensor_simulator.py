@@ -12,12 +12,13 @@ import paho.mqtt.client as mqtt
 import time
 import random
 import json
+import os
 from datetime import datetime
 
-# Configuration
-MQTT_BROKER = "broker.hivemq.com"
-MQTT_PORT = 1883
-MQTT_TOPIC_PREFIX = "sensegrid"
+# Configuration from environment variables
+MQTT_BROKER = os.getenv("MQTT_BROKER", "broker.hivemq.com")
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+MQTT_TOPIC_PREFIX = os.getenv("MQTT_TOPIC_PREFIX", "sensegrid")
 
 # Device configurations
 DEVICES = [

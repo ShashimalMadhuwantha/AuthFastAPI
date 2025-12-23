@@ -1,0 +1,13 @@
+# Dockerfile for Sensor Simulator
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir paho-mqtt
+
+# Copy simulator script
+COPY sensor_simulator.py .
+
+# Run simulator
+CMD ["python", "sensor_simulator.py"]

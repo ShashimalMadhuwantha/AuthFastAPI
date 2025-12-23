@@ -7,9 +7,11 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/
 
-# Copy static files
+# Copy all frontend files
 COPY *.html /usr/share/nginx/html/
 COPY *.js /usr/share/nginx/html/
+COPY css/ /usr/share/nginx/html/css/
+COPY js/ /usr/share/nginx/html/js/
 
 # Create non-root user for nginx
 RUN chown -R nginx:nginx /usr/share/nginx/html && \

@@ -5,12 +5,12 @@ services:
     container_name: sensegrid-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: sensegrid_db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-sensegrid_db}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"
+      - "${DATABASE_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -29,12 +29,15 @@ services:
     container_name: sensegrid-backend
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/sensegrid_db
-      SECRET_KEY: 09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
-      ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/sensegrid_db}
+      SECRET_KEY: ${SECRET_KEY:-09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      MQTT_BROKER: ${MQTT_BROKER:-broker.hivemq.com}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_TOPIC_PREFIX: ${MQTT_TOPIC_PREFIX:-sensegrid}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -49,7 +52,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Frontend (Nginx)
+  # Frontend (Nginx) - API-based Dashboard
   frontend:
     build:
       context: ./frontend
@@ -57,7 +60,7 @@ services:
     container_name: sensegrid-frontend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       - backend
     networks:
@@ -68,6 +71,38 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+
+  # Frontend2 (Nginx) - MQTT Dashboard
+  frontend2:
+    build:
+      context: ./frontend2
+      dockerfile: Dockerfile
+    container_name: sensegrid-frontend2
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND2_PORT:-3001}:3000"
+    networks:
+      - sensegrid-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # Sensor Simulator
+  simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.simulator
+    container_name: sensegrid-simulator
+    restart: unless-stopped
+    environment:
+      MQTT_BROKER: ${MQTT_BROKER:-broker.hivemq.com}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_TOPIC_PREFIX: ${MQTT_TOPIC_PREFIX:-sensegrid}
+    networks:
+      - sensegrid-network
 
 # Networks
 networks:

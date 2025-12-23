@@ -8,19 +8,23 @@ const API_CONFIG = {
     // In local dev: use localhost
     BASE_URL: (() => {
         const hostname = window.location.hostname;
+        const port = window.location.port;
 
-        // If running in Docker (served from nginx on port 3000)
-        if (window.location.port === '3000') {
+        // Docker environment: frontend on port 3000, backend on port 8000
+        // Local dev: frontend on port 8080, backend on port 8000
+
+        // Always use the current hostname with backend port 8000
+        // This works for:
+        // - Docker: http://localhost:3000 -> http://localhost:8000
+        // - Local: http://localhost:8080 -> http://localhost:8000
+        // - Production: http://example.com:3000 -> http://example.com:8000
+
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
             return 'http://localhost:8000';
         }
 
-        // Local development
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://127.0.0.1:8000';
-        }
-
         // Production - use same host
-        return `${window.location.protocol}//${hostname}:8000`;
+        return `http://${hostname}:8000`;
     })(),
 
     // API endpoints

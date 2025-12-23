@@ -1,22 +1,18 @@
 // Devices API Configuration (ES6 Module version)
-// This is a module-specific version of config for devices-api.js
+// This exists because devices-api.js uses ES6 imports
+// config.js can't be imported as a module due to backward compatibility
 
 // Get API base URL
 const getBaseUrl = () => {
     const hostname = window.location.hostname;
 
-    // If running in Docker (served from nginx on port 3000)
-    if (window.location.port === '3000') {
+    // Local development - always use localhost:8000
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return 'http://localhost:8000';
     }
 
-    // Local development
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://127.0.0.1:8000';
-    }
-
-    // Production - use same host
-    return `${window.location.protocol}//${hostname}:8000`;
+    // Production/Remote - use same hostname
+    return `http://${hostname}:8000`;
 };
 
 const API_CONFIG = {
