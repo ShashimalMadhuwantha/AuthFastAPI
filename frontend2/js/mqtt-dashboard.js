@@ -8,6 +8,8 @@ const MQTT_CONFIG = {
 };
 
 // Device data storage
+let maxDataPoints = 50; // Configurable data retention
+
 const devicesData = {
     LR1: {
         status: 'offline',
@@ -34,6 +36,34 @@ const charts = {};
 
 // MQTT Client
 let mqttClient = null;
+
+// Setup data retention selector
+function setupDataRetentionSelector() {
+    const selector = document.getElementById('dataRetentionSelector');
+    if (selector) {
+        selector.addEventListener('change', (e) => {
+            maxDataPoints = parseInt(e.target.value);
+            console.log(`📊 Data retention changed to ${maxDataPoints} points`);
+
+            // Trim existing data to new limit
+            Object.keys(devicesData).forEach(deviceId => {
+                Object.keys(devicesData[deviceId].sensors).forEach(sensorType => {
+                    const sensor = devicesData[deviceId].sensors[sensorType];
+                    if (sensor.values.length > maxDataPoints) {
+                        sensor.values = sensor.values.slice(-maxDataPoints);
+                    }
+                });
+            });
+
+            // Update all charts
+            MQTT_CONFIG.DEVICES.forEach(deviceId => {
+                MQTT_CONFIG.SENSOR_TYPES.forEach(sensorType => {
+                    updateSensorUI(deviceId, sensorType);
+                });
+            });
+        });
+    }
+}
 
 // Initialize MQTT Connection
 function initMQTT() {
@@ -131,9 +161,9 @@ function updateSensorData(deviceId, sensorType, data) {
     sensor.sum += value;
     sensor.count++;
 
-    // Store for chart (keep last 50 points)
+    // Store for chart (keep last N points based on maxDataPoints)
     sensor.values.push({ value, timestamp });
-    if (sensor.values.length > 50) {
+    if (sensor.values.length > maxDataPoints) {
         sensor.values.shift();
     }
 
@@ -275,7 +305,22 @@ function initChart(deviceId, sensorType) {
                 legend: { display: false }
             },
             scales: {
-                x: { display: false },
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'minute',
+                        displayFormats: {
+                            minute: 'HH:mm',
+                            hour: 'HH:mm'
+                        }
+                    },
+                    adapters: {
+                        date: {
+                            zone: 'UTC'
+                        }
+                    },
+                    display: false
+                },
                 y: { beginAtZero: true }
             }
         }

@@ -94,7 +94,7 @@ class SensorSimulator:
             payload = json.dumps({
                 "value": value,
                 "unit": config["unit"],
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat() + 'Z'  # Add Z to indicate UTC
             })
             
             topic = f"{MQTT_TOPIC_PREFIX}/{self.device_id}/sensors/{sensor_type}"

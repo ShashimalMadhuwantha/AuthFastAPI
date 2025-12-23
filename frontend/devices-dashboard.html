@@ -94,9 +94,24 @@
     <!-- Main Content -->
     <main>
         <!-- Header Section -->
-        <div class="gradient-header rounded-lg p-8 mb-6 text-white fade-in">
-            <h1 class="text-3xl font-bold mb-2">IoT Devices Dashboard</h1>
-            <p class="text-lg opacity-90">Real-time monitoring of your IoT devices and sensors</p>
+        <div class="gradient-header rounded-lg p-8 mb-6 text-white fade-in"
+            style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">IoT Devices Dashboard</h1>
+                <p class="text-lg opacity-90">Real-time monitoring of your IoT devices and sensors</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 14px; opacity: 0.9;">Time Period:</span>
+                <select id="timePeriodSelector"
+                    style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; background: white; color: #333;">
+                    <option value="1">Last 1 Hour</option>
+                    <option value="6">Last 6 Hours</option>
+                    <option value="12">Last 12 Hours</option>
+                    <option value="24" selected>Last 24 Hours</option>
+                    <option value="48">Last 2 Days</option>
+                    <option value="168">Last 7 Days</option>
+                </select>
+            </div>
         </div>
 
         <!-- Devices Container -->

@@ -20,6 +20,9 @@ class DeviceResponse(DeviceBase):
     
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z' if v else None
+        }
 
 # Sensor Reading Schemas
 class SensorReadingCreate(BaseModel):
@@ -37,6 +40,9 @@ class SensorReadingResponse(BaseModel):
     
     class Config:
         from_attributes = True
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z' if v else None
+        }
 
 # Statistics Schema
 class SensorStats(BaseModel):
@@ -48,10 +54,20 @@ class SensorStats(BaseModel):
     start_time: datetime
     end_time: datetime
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z' if v else None
+        }
+
 # Time Series Data Point
 class TimeSeriesPoint(BaseModel):
     timestamp: datetime
     value: float
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z' if v else None
+        }
 
 class TimeSeriesResponse(BaseModel):
     sensor_type: str

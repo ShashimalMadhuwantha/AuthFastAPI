@@ -78,9 +78,22 @@
     <div id="connectionStatus" class="connection-status connecting">Connecting to MQTT...</div>
 
     <!-- Header -->
-    <div class="header">
-        <h1>🌐 MQTT Devices Dashboard</h1>
-        <p>Real-time monitoring via MQTT Broker</p>
+    <div class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 40px;">
+        <div>
+            <h1>🌐 MQTT Devices Dashboard</h1>
+            <p>Real-time monitoring via MQTT Broker</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 14px; opacity: 0.9;">Data Retention:</span>
+            <select id="dataRetentionSelector"
+                style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; background: white; color: #333;">
+                <option value="10">Last 10 Points</option>
+                <option value="20">Last 20 Points</option>
+                <option value="50" selected>Last 50 Points</option>
+                <option value="100">Last 100 Points</option>
+                <option value="200">Last 200 Points</option>
+            </select>
+        </div>
     </div>
 
     <!-- Devices Container -->

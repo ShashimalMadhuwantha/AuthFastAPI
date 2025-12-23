@@ -50,7 +50,7 @@ export const DevicesAPI = {
     /**
      * Get all data for a device (device info + all sensors)
      */
-    async getDeviceData(deviceId, sensorTypes) {
+    async getDeviceData(deviceId, sensorTypes, hours = 24) {
         try {
             const deviceInfo = await this.getDevice(deviceId);
 
@@ -59,8 +59,8 @@ export const DevicesAPI = {
                     try {
                         const [latest, stats, timeseries] = await Promise.all([
                             this.getLatestReading(deviceId, type),
-                            this.getSensorStats(deviceId, type),
-                            this.getTimeSeries(deviceId, type)
+                            this.getSensorStats(deviceId, type, hours),
+                            this.getTimeSeries(deviceId, type, hours)
                         ]);
                         return { type, latest, stats, timeseries };
                     } catch (err) {

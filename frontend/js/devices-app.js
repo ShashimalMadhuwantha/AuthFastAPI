@@ -15,6 +15,7 @@ class DevicesDashboard {
         this.updateInterval = null;
         this.timestampInterval = null;
         this.charts = {};
+        this.timePeriodHours = 24; // Default 24 hours
     }
 
     /**
@@ -22,10 +23,33 @@ class DevicesDashboard {
      */
     async init() {
         console.log('🚀 Initializing Devices Dashboard...');
+        this.setupTimePeriodSelector();
         await this.loadAllDevices();
         this.startAutoUpdate();
         this.startTimestampRefresh();
         console.log('✅ Dashboard initialized');
+    }
+
+    /**
+     * Setup time period selector
+     */
+    setupTimePeriodSelector() {
+        const selector = document.getElementById('timePeriodSelector');
+        if (selector) {
+            selector.addEventListener('change', async (e) => {
+                this.timePeriodHours = parseInt(e.target.value);
+                console.log(`⏱️ Time period changed to ${this.timePeriodHours} hours`);
+                await this.refreshAllData();
+            });
+        }
+    }
+
+    /**
+     * Refresh all data with new time period
+     */
+    async refreshAllData() {
+        console.log('🔄 Refreshing all data...');
+        await this.loadAllDevices();
     }
 
     /**
@@ -47,7 +71,7 @@ class DevicesDashboard {
             // Fetch data for each device
             const devicesData = await Promise.all(
                 devices.map(device =>
-                    DevicesAPI.getDeviceData(device.device_id, CONFIG.SENSOR_TYPES)
+                    DevicesAPI.getDeviceData(device.device_id, CONFIG.SENSOR_TYPES, this.timePeriodHours)
                 )
             );
 
@@ -145,7 +169,19 @@ class DevicesDashboard {
                     x: {
                         type: 'time',
                         time: {
-                            unit: 'minute'
+                            unit: 'minute',
+                            displayFormats: {
+                                minute: 'HH:mm',
+                                hour: 'HH:mm'
+                            }
+                        },
+                        adapters: {
+                            date: {
+                                zone: 'UTC'
+                            }
+                        },
+                        ticks: {
+                            source: 'auto'
                         },
                         display: false
                     },
@@ -183,8 +219,8 @@ class DevicesDashboard {
                     try {
                         const [latest, stats, timeseries] = await Promise.all([
                             DevicesAPI.getLatestReading(deviceId, type),
-                            DevicesAPI.getSensorStats(deviceId, type),
-                            DevicesAPI.getTimeSeries(deviceId, type)
+                            DevicesAPI.getSensorStats(deviceId, type, this.timePeriodHours),
+                            DevicesAPI.getTimeSeries(deviceId, type, this.timePeriodHours)
                         ]);
 
                         const sensorCard = new SensorCard(deviceId, type, latest, stats);
