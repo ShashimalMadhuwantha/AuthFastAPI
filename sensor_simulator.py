@@ -140,6 +140,10 @@ def main():
     print("=" * 60)
     print()
     
+    # Wait a bit for backend to be ready (especially in Docker)
+    print("Waiting 5 seconds for backend to initialize...")
+    time.sleep(5)
+    
     # Create simulators for all devices
     simulators = [SensorSimulator(device) for device in DEVICES]
     

@@ -97,6 +97,9 @@ services:
       dockerfile: Dockerfile.simulator
     container_name: sensegrid-simulator
     restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
     environment:
       MQTT_BROKER: ${MQTT_BROKER:-broker.hivemq.com}
       MQTT_PORT: ${MQTT_PORT:-1883}
