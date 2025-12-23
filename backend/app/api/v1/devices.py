@@ -1,0 +1,108 @@
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from app.db.database import get_db
+from app.schemas.device import (
+    DeviceCreate, 
+    DeviceResponse, 
+    SensorReadingCreate,
+    SensorReadingResponse,
+    SensorStats,
+    TimeSeriesResponse
+)
+from app.services.device_service import DeviceService
+from app.services.sensor_service import SensorService
+from app.core.logger import logger
+
+router = APIRouter()
+
+# Device endpoints
+@router.get("/", response_model=List[DeviceResponse])
+async def get_all_devices(db: Session = Depends(get_db)):
+    """Get all devices with their current status"""
+    logger.info("[API] Get all devices request")
+    devices = DeviceService.get_all_devices(db)
+    return devices
+
+@router.get("/{device_id}", response_model=DeviceResponse)
+async def get_device(
+    device_id: str, 
+    db: Session = Depends(get_db)
+):
+    """Get a specific device by device_id"""
+    logger.info(f"[API] Get device {device_id} request")
+    device = DeviceService.get_device_by_device_id(db, device_id)
+    return device
+
+@router.post("/", response_model=DeviceResponse, status_code=status.HTTP_201_CREATED)
+async def create_device(
+    device: DeviceCreate, 
+    db: Session = Depends(get_db)
+):
+    """Create a new device"""
+    logger.info(f"[API] Create device request: {device.device_id}")
+    new_device = DeviceService.create_device(db, device)
+    return new_device
+
+@router.put("/{device_id}/status", response_model=DeviceResponse)
+async def update_device_status(
+    device_id: str, 
+    status: str,
+    db: Session = Depends(get_db)
+):
+    """Update device online/offline status"""
+    logger.info(f"[API] Update device {device_id} status to {status}")
+    if status not in ["online", "offline"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Status must be 'online' or 'offline'"
+        )
+    device = DeviceService.update_device_status(db, device_id, status)
+    return device
+
+# Sensor endpoints
+@router.post("/{device_id}/sensors", response_model=SensorReadingResponse, status_code=status.HTTP_201_CREATED)
+async def create_sensor_reading(
+    device_id: str,
+    reading: SensorReadingCreate,
+    db: Session = Depends(get_db)
+):
+    """Store a new sensor reading"""
+    logger.info(f"[API] Create sensor reading for {device_id}/{reading.sensor_type}")
+    new_reading = SensorService.create_sensor_reading(db, device_id, reading)
+    return new_reading
+
+@router.get("/{device_id}/sensors/{sensor_type}/latest", response_model=SensorReadingResponse)
+async def get_latest_sensor_reading(
+    device_id: str,
+    sensor_type: str,
+    db: Session = Depends(get_db)
+):
+    """Get the latest sensor reading for a device and sensor type"""
+    logger.info(f"[API] Get latest reading for {device_id}/{sensor_type}")
+    reading = SensorService.get_latest_reading(db, device_id, sensor_type)
+    return reading
+
+@router.get("/{device_id}/sensors/{sensor_type}/stats", response_model=SensorStats)
+async def get_sensor_stats(
+    device_id: str,
+    sensor_type: str,
+    hours: Optional[int] = Query(24, description="Time period in hours"),
+    db: Session = Depends(get_db)
+):
+    """Get min, max, avg statistics for a sensor over a time period"""
+    logger.info(f"[API] Get stats for {device_id}/{sensor_type} (last {hours} hours)")
+    stats = SensorService.get_sensor_stats(db, device_id, sensor_type, hours)
+    return stats
+
+@router.get("/{device_id}/sensors/{sensor_type}/timeseries", response_model=TimeSeriesResponse)
+async def get_sensor_timeseries(
+    device_id: str,
+    sensor_type: str,
+    hours: Optional[int] = Query(24, description="Time period in hours"),
+    db: Session = Depends(get_db)
+):
+    """Get time series data for graphing"""
+    logger.info(f"[API] Get timeseries for {device_id}/{sensor_type} (last {hours} hours)")
+    timeseries = SensorService.get_time_series(db, device_id, sensor_type, hours)
+    return timeseries
