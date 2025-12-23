@@ -1,0 +1,83 @@
+// API wrapper for device endpoints
+import { API_CONFIG, getApiUrl } from './devices-config.js';
+
+export const DevicesAPI = {
+    /**
+     * Get all devices
+     */
+    async getAllDevices() {
+        const response = await fetch(getApiUrl('/api/v1/devices/'));
+        if (!response.ok) throw new Error('Failed to fetch devices');
+        return response.json();
+    },
+
+    /**
+     * Get specific device
+     */
+    async getDevice(deviceId) {
+        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}`));
+        if (!response.ok) throw new Error(`Failed to fetch device ${deviceId}`);
+        return response.json();
+    },
+
+    /**
+     * Get latest sensor reading
+     */
+    async getLatestReading(deviceId, sensorType) {
+        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/latest`));
+        if (!response.ok) throw new Error(`Failed to fetch latest reading for ${deviceId}/${sensorType}`);
+        return response.json();
+    },
+
+    /**
+     * Get sensor statistics
+     */
+    async getSensorStats(deviceId, sensorType, hours = 24) {
+        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/stats?hours=${hours}`));
+        if (!response.ok) throw new Error(`Failed to fetch stats for ${deviceId}/${sensorType}`);
+        return response.json();
+    },
+
+    /**
+     * Get sensor time series data
+     */
+    async getTimeSeries(deviceId, sensorType, hours = 24) {
+        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/timeseries?hours=${hours}`));
+        if (!response.ok) throw new Error(`Failed to fetch timeseries for ${deviceId}/${sensorType}`);
+        return response.json();
+    },
+
+    /**
+     * Get all data for a device (device info + all sensors)
+     */
+    async getDeviceData(deviceId, sensorTypes) {
+        try {
+            const deviceInfo = await this.getDevice(deviceId);
+
+            const sensorsData = await Promise.all(
+                sensorTypes.map(async (type) => {
+                    try {
+                        const [latest, stats, timeseries] = await Promise.all([
+                            this.getLatestReading(deviceId, type),
+                            this.getSensorStats(deviceId, type),
+                            this.getTimeSeries(deviceId, type)
+                        ]);
+                        return { type, latest, stats, timeseries };
+                    } catch (err) {
+                        console.warn(`No data for ${deviceId}/${type}`);
+                        return null;
+                    }
+                })
+            );
+
+            return {
+                deviceId,
+                deviceInfo,
+                sensors: sensorsData.filter(s => s !== null)
+            };
+        } catch (error) {
+            console.error(`Error fetching data for ${deviceId}:`, error);
+            return null;
+        }
+    }
+};

@@ -50,8 +50,3 @@ function getApiUrl(endpoint, params = {}) {
 
     return url;
 }
-
-// Export for use in other scripts
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = API_CONFIG;
-}

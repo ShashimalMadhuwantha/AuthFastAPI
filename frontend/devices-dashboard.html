@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devices Dashboard - SenseGrid</title>
+    <meta name="description" content="Real-time IoT device and sensor monitoring dashboard">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/devices.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { "50": "#eff6ff", "100": "#dbeafe", "200": "#bfdbfe", "300": "#93c5fd", "400": "#60a5fa", "500": "#3b82f6", "600": "#2563eb", "700": "#1d4ed8", "800": "#1e40af", "900": "#1e3a8a", "950": "#172554" }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 antialiased">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="dashboard.html" class="flex items-center space-x-3">
+                <img src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg" class="h-8"
+                    alt="SenseGrid Logo">
+                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">SenseGrid</span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <a href="dashboard.html"
+                    class="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">
+                    Dashboard
+                </a>
+                <a href="users-dashboard.html"
+                    class="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">
+                    Users
+                </a>
+                <a href="devices-dashboard.html" class="text-sm text-primary-600 dark:text-primary-400 font-semibold">
+                    Devices
+                </a>
+                <span class="text-sm text-gray-700 dark:text-gray-300">Welcome, <span id="usernameDisplay"
+                        class="font-semibold"></span></span>
+                <button onclick="handleLogout()"
+                    class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Header Section -->
+        <div class="gradient-header rounded-lg p-8 mb-6 text-white fade-in">
+            <h1 class="text-3xl font-bold mb-2">IoT Devices Dashboard</h1>
+            <p class="text-lg opacity-90">Real-time monitoring of your IoT devices and sensors</p>
+        </div>
+
+        <!-- Devices Container -->
+        <div id="devices-container" class="devices-container">
+            <div class="text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">Loading devices...</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="config.js"></script>
+    <script>
+        // Check if user is logged in
+        function checkAuth() {
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+            const username = localStorage.getItem('username') || sessionStorage.getItem('username');
+
+            if (!token || !username) {
+                window.location.href = 'index.html';
+                return null;
+            }
+
+            document.getElementById('usernameDisplay').textContent = username;
+            return { token, username };
+        }
+
+        // Handle logout
+        function handleLogout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('username');
+            sessionStorage.removeItem('access_token');
+            sessionStorage.removeItem('username');
+            window.location.href = 'index.html';
+        }
+
+        // Initialize
+        checkAuth();
+    </script>
+
+    <!-- Application Scripts (ES6 Modules) -->
+    <script type="module" src="js/devices-app.js"></script>
+</body>
+
+</html>
