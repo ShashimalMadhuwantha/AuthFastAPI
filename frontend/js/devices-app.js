@@ -15,7 +15,8 @@ class DevicesDashboard {
         this.updateInterval = null;
         this.timestampInterval = null;
         this.charts = {};
-        this.timePeriodHours = 24; // Default 24 hours
+        this.timePeriodHours = parseFloat(localStorage.getItem('timePeriod')) || 24; // Load from localStorage or default 24 hours
+        this.refreshIntervalSeconds = parseInt(localStorage.getItem('refreshInterval')) || 5; // Load from localStorage or default 5 seconds
     }
 
     /**
@@ -24,10 +25,34 @@ class DevicesDashboard {
     async init() {
         console.log('🚀 Initializing Devices Dashboard...');
         this.setupTimePeriodSelector();
+        this.setupEventListeners(); // Listen for modal events
         await this.loadAllDevices();
         this.startAutoUpdate();
         this.startTimestampRefresh();
         console.log('✅ Dashboard initialized');
+        console.log(`⏱️ Refresh interval: ${this.refreshIntervalSeconds} seconds`);
+        console.log(`📅 Time period: ${this.timePeriodHours} hours`);
+    }
+
+    /**
+     * Setup event listeners for modal settings
+     */
+    setupEventListeners() {
+        // Listen for refresh interval changes from modal
+        window.addEventListener('refreshIntervalChanged', (e) => {
+            const newInterval = e.detail.interval;
+            console.log(`🔄 Refresh interval changed to ${newInterval} seconds`);
+            this.refreshIntervalSeconds = newInterval;
+            this.restartAutoUpdate();
+        });
+
+        // Listen for time period changes from modal
+        window.addEventListener('timePeriodChanged', async (e) => {
+            const newPeriod = e.detail.hours;
+            console.log(`📅 Time period changed to ${newPeriod} hours`);
+            this.timePeriodHours = newPeriod;
+            await this.refreshAllData();
+        });
     }
 
     /**
@@ -36,8 +61,11 @@ class DevicesDashboard {
     setupTimePeriodSelector() {
         const selector = document.getElementById('timePeriodSelector');
         if (selector) {
+            // Set initial value from localStorage
+            selector.value = this.timePeriodHours;
+
             selector.addEventListener('change', async (e) => {
-                this.timePeriodHours = parseInt(e.target.value);
+                this.timePeriodHours = parseFloat(e.target.value);
                 console.log(`⏱️ Time period changed to ${this.timePeriodHours} hours`);
                 await this.refreshAllData();
             });
@@ -258,11 +286,24 @@ class DevicesDashboard {
      * Start automatic updates
      */
     startAutoUpdate() {
-        console.log(`⏰ Auto-update started (every ${CONFIG.UPDATE_INTERVAL / 1000} seconds)`);
+        const intervalMs = this.refreshIntervalSeconds * 1000;
+        console.log(`⏰ Auto-update started (every ${this.refreshIntervalSeconds} seconds)`);
 
         this.updateInterval = setInterval(() => {
             this.updateValues();
-        }, CONFIG.UPDATE_INTERVAL);
+        }, intervalMs);
+    }
+
+    /**
+     * Restart automatic updates with new interval
+     */
+    restartAutoUpdate() {
+        // Clear existing interval
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
+        // Start with new interval
+        this.startAutoUpdate();
     }
 
     /**

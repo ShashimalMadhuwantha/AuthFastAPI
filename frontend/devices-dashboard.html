@@ -100,19 +100,109 @@
                 <h1 class="text-3xl font-bold mb-2">IoT Devices Dashboard</h1>
                 <p class="text-lg opacity-90">Real-time monitoring of your IoT devices and sensors</p>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 14px; opacity: 0.9;">Time Period:</span>
-                <select id="timePeriodSelector"
-                    style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; background: white; color: #333;">
-                    <option value="1">Last 1 Hour</option>
-                    <option value="6">Last 6 Hours</option>
-                    <option value="12">Last 12 Hours</option>
-                    <option value="24" selected>Last 24 Hours</option>
-                    <option value="48">Last 2 Days</option>
-                    <option value="168">Last 7 Days</option>
-                </select>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <!-- Settings Icon -->
+                <button id="settingsBtn" onclick="openSettingsModal()"
+                    style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M12 1v6m0 6v6m8.66-10.5l-5.2 3M8.54 14l-5.2 3m13.32 0l-5.2-3M8.54 10l-5.2-3"></path>
+                    </svg>
+                </button>
             </div>
         </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+            <div
+                style="background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <!-- Modal Header -->
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e5e7eb;">
+                    <h2 style="font-size: 20px; font-weight: 600; color: #111827;">Settings</h2>
+                    <button onclick="closeSettingsModal()"
+                        style="background: none; border: none; cursor: pointer; font-size: 24px; color: #6b7280; line-height: 1;">
+                        ×
+                    </button>
+                </div>
+
+                <!-- Tabs -->
+                <div style="display: flex; border-bottom: 1px solid #e5e7eb;">
+                    <button id="realtimeTab" onclick="switchTab('realtime')"
+                        style="flex: 1; padding: 16px; background: #047857; color: white; border: none; cursor: pointer; font-weight: 500; border-radius: 0;">
+                        Realtime
+                    </button>
+                    <button id="historyTab" onclick="switchTab('history')"
+                        style="flex: 1; padding: 16px; background: #e5e7eb; color: #6b7280; border: none; cursor: pointer; font-weight: 500; border-radius: 0;">
+                        History
+                    </button>
+                </div>
+
+                <!-- Realtime Tab Content -->
+                <div id="realtimeContent" style="padding: 24px;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 16px;">Auto-Refresh
+                        Interval</h3>
+                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Set how often the dashboard updates
+                        with new data</p>
+
+                    <select id="refreshInterval" onchange="updateRefreshInterval()"
+                        style="width: 100%; padding: 12px; border: 2px solid #047857; border-radius: 8px; font-size: 14px; cursor: pointer; background: white;">
+                        <option value="1">1 second</option>
+                        <option value="5" selected>5 seconds</option>
+                        <option value="10">10 seconds</option>
+                        <option value="15">15 seconds</option>
+                        <option value="30">30 seconds</option>
+                        <option value="60">1 minute</option>
+                        <option value="300">5 minutes</option>
+                    </select>
+
+                    <div
+                        style="margin-top: 20px; padding: 12px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #047857;">
+                        <p style="font-size: 13px; color: #047857; margin: 0;">
+                            <strong>Current:</strong> <span id="currentRefreshDisplay">5 seconds</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- History Tab Content -->
+                <div id="historyContent" style="display: none; padding: 24px;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 16px;">Time Period</h3>
+                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Select the time range for
+                        historical data</p>
+
+                    <select id="timePeriodSelector" onchange="updateTimePeriod()"
+                        style="width: 100%; padding: 12px; border: 2px solid #047857; border-radius: 8px; font-size: 14px; cursor: pointer; background: white;">
+                        <option value="1">Last 1 hour</option>
+                        <option value="6">Last 6 hours</option>
+                        <option value="12">Last 12 hours</option>
+                        <option value="24" selected>Last 24 hours</option>
+                        <option value="48">Last 2 days</option>
+                        <option value="168">Last 7 days</option>
+                    </select>
+
+                    <div
+                        style="margin-top: 20px; padding: 12px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #047857;">
+                        <p style="font-size: 13px; color: #047857; margin: 0;">
+                            <strong>Current:</strong> <span id="currentPeriodDisplay">Last 24 hours</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div
+                    style="padding: 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button onclick="closeSettingsModal()"
+                        style="padding: 10px 20px; background: #047857; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                        Done
+                    </button>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Devices Container -->
         <div id="devices-container" class="devices-container">
@@ -125,6 +215,92 @@
 
     <script src="config.js"></script>
     <script>
+        // Settings Modal Functions
+        function openSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function switchTab(tab) {
+            const realtimeTab = document.getElementById('realtimeTab');
+            const historyTab = document.getElementById('historyTab');
+            const realtimeContent = document.getElementById('realtimeContent');
+            const historyContent = document.getElementById('historyContent');
+
+            if (tab === 'realtime') {
+                realtimeTab.style.background = '#047857';
+                realtimeTab.style.color = 'white';
+                historyTab.style.background = '#e5e7eb';
+                historyTab.style.color = '#6b7280';
+                realtimeContent.style.display = 'block';
+                historyContent.style.display = 'none';
+            } else {
+                historyTab.style.background = '#047857';
+                historyTab.style.color = 'white';
+                realtimeTab.style.background = '#e5e7eb';
+                realtimeTab.style.color = '#6b7280';
+                historyContent.style.display = 'block';
+                realtimeContent.style.display = 'none';
+            }
+        }
+
+        function updateRefreshInterval() {
+            const interval = document.getElementById('refreshInterval').value;
+            const displayText = document.getElementById('refreshInterval').options[document.getElementById('refreshInterval').selectedIndex].text;
+            document.getElementById('currentRefreshDisplay').textContent = displayText;
+
+            // Store in localStorage
+            localStorage.setItem('refreshInterval', interval);
+
+            // Trigger event for devices-app.js to update
+            window.dispatchEvent(new CustomEvent('refreshIntervalChanged', { detail: { interval: parseInt(interval) } }));
+
+            console.log('Refresh interval updated to:', interval, 'seconds');
+        }
+
+        function updateTimePeriod() {
+            const period = document.getElementById('timePeriodSelector').value;
+            const displayText = document.getElementById('timePeriodSelector').options[document.getElementById('timePeriodSelector').selectedIndex].text;
+            document.getElementById('currentPeriodDisplay').textContent = displayText;
+
+            // Store in localStorage
+            localStorage.setItem('timePeriod', period);
+
+            // Trigger event for devices-app.js to update
+            window.dispatchEvent(new CustomEvent('timePeriodChanged', { detail: { hours: parseFloat(period) } }));
+
+            console.log('Time period updated to:', period, 'hours');
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function (event) {
+            const modal = document.getElementById('settingsModal');
+            if (event.target === modal) {
+                closeSettingsModal();
+            }
+        });
+
+        // Load saved settings on page load
+        window.addEventListener('DOMContentLoaded', function () {
+            const savedRefresh = localStorage.getItem('refreshInterval');
+            const savedPeriod = localStorage.getItem('timePeriod');
+
+            if (savedRefresh) {
+                document.getElementById('refreshInterval').value = savedRefresh;
+                const displayText = document.getElementById('refreshInterval').options[document.getElementById('refreshInterval').selectedIndex].text;
+                document.getElementById('currentRefreshDisplay').textContent = displayText;
+            }
+
+            if (savedPeriod) {
+                document.getElementById('timePeriodSelector').value = savedPeriod;
+                const displayText = document.getElementById('timePeriodSelector').options[document.getElementById('timePeriodSelector').selectedIndex].text;
+                document.getElementById('currentPeriodDisplay').textContent = displayText;
+            }
+        });
+
         // Check if user is logged in
         function checkAuth() {
             const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');

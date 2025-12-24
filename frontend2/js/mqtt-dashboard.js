@@ -8,7 +8,7 @@ const MQTT_CONFIG = {
 };
 
 // Device data storage
-let timePeriodHours = 1; // Default: 1 hour
+let timePeriodHours = parseFloat(localStorage.getItem('timePeriodMQTT')) || 1; // Load from localStorage or default: 1 hour
 
 const devicesData = {
     LR1: {
@@ -41,6 +41,9 @@ let mqttClient = null;
 function setupTimePeriodSelector() {
     const selector = document.getElementById('timePeriodSelector');
     if (selector) {
+        // Set initial value from localStorage
+        selector.value = timePeriodHours;
+
         selector.addEventListener('change', (e) => {
             timePeriodHours = parseFloat(e.target.value);
             console.log(`⏱️ Time period changed to ${timePeriodHours} hours`);
@@ -65,6 +68,35 @@ function setupTimePeriodSelector() {
         });
     }
 }
+
+// Listen for time period changes from modal
+window.addEventListener('timePeriodChanged', (e) => {
+    const newPeriod = e.detail.hours;
+    console.log(`📅 Time period changed from modal to ${newPeriod} hours`);
+    timePeriodHours = newPeriod;
+
+    // Update selector if it exists
+    const selector = document.getElementById('timePeriodSelector');
+    if (selector) {
+        selector.value = newPeriod;
+    }
+
+    // Filter existing data
+    const cutoffTime = new Date(Date.now() - timePeriodHours * 60 * 60 * 1000);
+    Object.keys(devicesData).forEach(deviceId => {
+        Object.keys(devicesData[deviceId].sensors).forEach(sensorType => {
+            const sensor = devicesData[deviceId].sensors[sensorType];
+            sensor.values = sensor.values.filter(v => new Date(v.timestamp) >= cutoffTime);
+        });
+    });
+
+    // Update all charts
+    MQTT_CONFIG.DEVICES.forEach(deviceId => {
+        MQTT_CONFIG.SENSOR_TYPES.forEach(sensorType => {
+            updateSensorUI(deviceId, sensorType);
+        });
+    });
+});
 
 // Initialize MQTT Connection
 function initMQTT() {
