@@ -1,28 +1,35 @@
-# Multi-stage build for Backend
+# Multi-stage build for Backend (Alpine-based)
 # Stage 1: Builder
-FROM python:3.11-slim as builder
+FROM python:3.11-alpine as builder
 
 WORKDIR /app
 
 # Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apk add --no-cache \
     gcc \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+    musl-dev \
+    postgresql-dev \
+    linux-headers \
+    libffi-dev
 
 # Copy requirements and install to user directory
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Stage 2: Runtime
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Install runtime dependencies only
+RUN apk add --no-cache \
+    libpq \
+    libffi
+
 # Create app user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN addgroup -S appuser && adduser -S appuser -G appuser
 
 WORKDIR /app
 
