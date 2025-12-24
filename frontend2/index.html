@@ -84,14 +84,14 @@
             <p>Real-time monitoring via MQTT Broker</p>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 14px; opacity: 0.9;">Data Retention:</span>
-            <select id="dataRetentionSelector"
+            <span style="font-size: 14px; opacity: 0.9;">Time Period:</span>
+            <select id="timePeriodSelector"
                 style="padding: 8px 12px; border-radius: 6px; border: none; font-size: 14px; cursor: pointer; background: white; color: #333;">
-                <option value="10">Last 10 Points</option>
-                <option value="20">Last 20 Points</option>
-                <option value="50" selected>Last 50 Points</option>
-                <option value="100">Last 100 Points</option>
-                <option value="200">Last 200 Points</option>
+                <option value="0.25">Last 15 minutes</option>
+                <option value="0.5">Last 30 minutes</option>
+                <option value="1" selected>Last 1 hour</option>
+                <option value="6">Last 6 hours</option>
+                <option value="24">Last 24 hours</option>
             </select>
         </div>
     </div>

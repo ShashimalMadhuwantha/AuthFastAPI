@@ -1,19 +1,38 @@
-# Use Nginx Alpine for lightweight image
-FROM nginx:alpine
+# Multi-stage build for Frontend
+# Stage 1: Prepare and optimize static files
+FROM alpine:3.19 as builder
 
-# Remove default nginx config
-RUN rm /etc/nginx/conf.d/default.conf
+WORKDIR /build
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/
+# Install tools for minification (optional, for future optimization)
+RUN apk add --no-cache \
+    findutils
 
 # Copy all frontend files
-COPY *.html /usr/share/nginx/html/
-COPY *.js /usr/share/nginx/html/
-COPY css/ /usr/share/nginx/html/css/
-COPY js/ /usr/share/nginx/html/js/
+COPY *.html ./
+COPY *.js ./
+COPY css/ ./css/
+COPY js/ ./js/
 
-# Create non-root user for nginx
+# Remove any unnecessary files
+RUN find . -name "*.map" -type f -delete && \
+    find . -name ".DS_Store" -type f -delete && \
+    find . -name "Thumbs.db" -type f -delete
+
+# Stage 2: Minimal nginx runtime
+FROM nginx:1.25-alpine
+
+# Remove default nginx files
+RUN rm -rf /usr/share/nginx/html/* && \
+    rm /etc/nginx/conf.d/default.conf
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/
+
+# Copy optimized files from builder
+COPY --from=builder /build /usr/share/nginx/html/
+
+# Set proper permissions
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \

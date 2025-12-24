@@ -1,10 +1,22 @@
-# Dockerfile for Sensor Simulator
+# Multi-stage build for Simulator
+# Stage 1: Builder
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Install dependencies to user directory
+RUN pip install --no-cache-dir --user paho-mqtt
+
+# Stage 2: Runtime
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies
-RUN pip install --no-cache-dir paho-mqtt
+# Set PATH for user-installed packages
+ENV PATH=/root/.local/bin:$PATH
+
+# Copy Python packages from builder
+COPY --from=builder /root/.local /root/.local
 
 # Copy simulator script
 COPY sensor_simulator.py .

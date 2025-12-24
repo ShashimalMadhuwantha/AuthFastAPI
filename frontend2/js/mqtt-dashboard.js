@@ -8,7 +8,7 @@ const MQTT_CONFIG = {
 };
 
 // Device data storage
-let maxDataPoints = 50; // Configurable data retention
+let timePeriodHours = 1; // Default: 1 hour
 
 const devicesData = {
     LR1: {
@@ -37,21 +37,22 @@ const charts = {};
 // MQTT Client
 let mqttClient = null;
 
-// Setup data retention selector
-function setupDataRetentionSelector() {
-    const selector = document.getElementById('dataRetentionSelector');
+// Setup time period selector
+function setupTimePeriodSelector() {
+    const selector = document.getElementById('timePeriodSelector');
     if (selector) {
         selector.addEventListener('change', (e) => {
-            maxDataPoints = parseInt(e.target.value);
-            console.log(`📊 Data retention changed to ${maxDataPoints} points`);
+            timePeriodHours = parseFloat(e.target.value);
+            console.log(`⏱️ Time period changed to ${timePeriodHours} hours`);
 
-            // Trim existing data to new limit
+            // Filter existing data based on time
+            const cutoffTime = new Date(Date.now() - timePeriodHours * 60 * 60 * 1000);
+
             Object.keys(devicesData).forEach(deviceId => {
                 Object.keys(devicesData[deviceId].sensors).forEach(sensorType => {
                     const sensor = devicesData[deviceId].sensors[sensorType];
-                    if (sensor.values.length > maxDataPoints) {
-                        sensor.values = sensor.values.slice(-maxDataPoints);
-                    }
+                    // Keep only data within the time period
+                    sensor.values = sensor.values.filter(v => new Date(v.timestamp) >= cutoffTime);
                 });
             });
 
@@ -68,6 +69,9 @@ function setupDataRetentionSelector() {
 // Initialize MQTT Connection
 function initMQTT() {
     console.log('🔌 Connecting to MQTT broker:', MQTT_CONFIG.BROKER);
+
+    // Setup time period selector
+    setupTimePeriodSelector();
 
     mqttClient = mqtt.connect(MQTT_CONFIG.BROKER, {
         clientId: 'mqtt_dashboard_' + Math.random().toString(16).substr(2, 8),
@@ -161,11 +165,12 @@ function updateSensorData(deviceId, sensorType, data) {
     sensor.sum += value;
     sensor.count++;
 
-    // Store for chart (keep last N points based on maxDataPoints)
+    // Store for chart (filter by time period)
     sensor.values.push({ value, timestamp });
-    if (sensor.values.length > maxDataPoints) {
-        sensor.values.shift();
-    }
+
+    // Remove data older than the selected time period
+    const cutoffTime = new Date(Date.now() - timePeriodHours * 60 * 60 * 1000);
+    sensor.values = sensor.values.filter(v => new Date(v.timestamp) >= cutoffTime);
 
     // Update UI
     updateSensorUI(deviceId, sensorType);
