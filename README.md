@@ -549,7 +549,7 @@ requests==2.31.0              # Make HTTP requests
 
 ## Environment Files Guide
 
-The project uses multiple `.env` files for different purposes. Here's what each one does and how to configure them.
+The project uses `.env` files for configuration. Here's what each one does and how to configure them.
 
 ### Overview of .env Files
 
@@ -557,13 +557,16 @@ The project uses multiple `.env` files for different purposes. Here's what each 
 AuthFastAPI/
 ├── .env                    # Docker Compose configuration (root level)
 ├── .env.example           # Template for root .env
-├── backend/
-│   ├── .env              # Backend application configuration
-│   └── .env.example      # Template for backend .env
-└── frontend/
-    ├── .env              # Frontend configuration (optional)
-    └── .env.example      # Template for frontend .env
+└── backend/
+    ├── .env              # Backend application configuration
+    └── .env.example      # Template for backend .env
 ```
+
+**Note:** Frontend and Frontend2 don't have `.env` files. They use:
+- **Port mapping**: Configured in root `.env` (`FRONTEND_PORT`, `FRONTEND2_PORT`)
+- **API URL**: Auto-detected in `config.js` (hardcoded logic)
+- **MQTT Broker**: Hardcoded in `mqtt-dashboard.js`
+
 
 ---
 
@@ -675,34 +678,6 @@ openssl rand -hex 32
 # Using Python
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
-
----
-
-### 3. Frontend `.env`
-
-**Location:** `AuthFastAPI/frontend/.env`
-
-**Purpose:** Frontend configuration (mainly for Nginx in Docker).
-
-**When to use:** When customizing frontend port or settings.
-
-**Setup:**
-```bash
-cd frontend
-cp .env.example .env
-```
-
-**Configuration:**
-
-```bash
-# Frontend Configuration
-FRONTEND_PORT=3000              # Port for the frontend application
-```
-
-**Note:** 
-- This is minimal because frontend is mostly static files
-- API endpoint is configured in `frontend/config.js` instead
-- In Docker, the root `.env` FRONTEND_PORT is used
 
 ---
 
