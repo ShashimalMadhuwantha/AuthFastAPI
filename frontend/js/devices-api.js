@@ -1,5 +1,5 @@
 // API wrapper for device endpoints
-import { API_CONFIG, getApiUrl } from './devices-config.js';
+// Uses global API_CONFIG and getApiUrl from config.js
 
 export const DevicesAPI = {
     /**

@@ -1,5 +1,14 @@
 // API Configuration
-// This file contains the API endpoint configuration
+// ===================
+// This is the SINGLE source of truth for API configuration
+// Used by both traditional scripts (<script src="config.js">) and ES6 modules
+// 
+// Files using this config:
+// - index.html (traditional script)
+// - devices-dashboard.html (traditional script)
+// - devices-api.js (ES6 module - uses global API_CONFIG and getApiUrl)
+// - devices-app.js (ES6 module - imports from devices-api.js)
+//
 // Automatically detects environment and sets appropriate API URL
 
 const API_CONFIG = {
@@ -40,17 +49,46 @@ const API_CONFIG = {
         USERS_GET: '/api/v1/users/{id}',
         USERS_UPDATE: '/api/v1/users/{id}',
         USERS_DELETE: '/api/v1/users/{id}',
+
+        // Device endpoints (used by devices-api.js)
+        DEVICES_LIST: '/api/v1/devices/',
+        DEVICES_GET: '/api/v1/devices/{device_id}',
+        SENSOR_LATEST: '/api/v1/devices/{device_id}/sensors/{sensor_type}/latest',
+        SENSOR_STATS: '/api/v1/devices/{device_id}/sensors/{sensor_type}/stats',
+        SENSOR_TIMESERIES: '/api/v1/devices/{device_id}/sensors/{sensor_type}/timeseries',
     }
 };
 
 // Helper function to get full API URL
+// Supports both path parameters ({id}) and query parameters (?hours=6)
 function getApiUrl(endpoint, params = {}) {
     let url = API_CONFIG.BASE_URL + endpoint;
 
-    // Replace path parameters (e.g., {id})
+    // Separate path params from query params
+    const pathParams = {};
+    const queryParams = {};
+
     Object.keys(params).forEach(key => {
-        url = url.replace(`{${key}}`, params[key]);
+        if (url.includes(`{${key}}`)) {
+            pathParams[key] = params[key];
+        } else {
+            queryParams[key] = params[key];
+        }
     });
+
+    // Replace path parameters (e.g., {id} -> 123)
+    Object.keys(pathParams).forEach(key => {
+        url = url.replace(`{${key}}`, pathParams[key]);
+    });
+
+    // Add query parameters (e.g., ?hours=6&type=CT1)
+    const queryString = Object.keys(queryParams)
+        .map(key => `${key}=${encodeURIComponent(queryParams[key])}`)
+        .join('&');
+
+    if (queryString) {
+        url += `?${queryString}`;
+    }
 
     return url;
 }
