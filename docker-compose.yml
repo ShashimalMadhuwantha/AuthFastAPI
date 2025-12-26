@@ -4,6 +4,7 @@ services:
     image: timescale/timescaledb:latest-pg16
     container_name: sensegrid-db
     restart: unless-stopped
+    profiles: ["core", "dev", "prod", "full"]  # Available in all profiles
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -28,6 +29,7 @@ services:
       dockerfile: Dockerfile
     container_name: sensegrid-backend
     restart: unless-stopped
+    profiles: ["core", "dev", "prod", "full"]  # Available in all profiles
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/sensegrid_db}
       SECRET_KEY: ${SECRET_KEY:-09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7}
@@ -52,13 +54,14 @@ services:
       retries: 3
       start_period: 40s
 
-  # Frontend (Nginx) - API-based Dashboard
+  # Frontend (API Dashboard)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: sensegrid-frontend
     restart: unless-stopped
+    profiles: ["frontend", "dev", "prod", "full"]  # Only in frontend-related profiles
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
@@ -72,13 +75,14 @@ services:
       retries: 3
       start_period: 5s
 
-  # Frontend2 (Nginx) - MQTT Dashboard
+  # Frontend2 (MQTT Dashboard)
   frontend2:
     build:
       context: ./frontend2
       dockerfile: Dockerfile
     container_name: sensegrid-frontend2
     restart: unless-stopped
+    profiles: ["frontend", "dev", "prod", "full"]  # Only in frontend-related profiles
     ports:
       - "${FRONTEND2_PORT:-3001}:3000"
     networks:
@@ -97,6 +101,7 @@ services:
       dockerfile: Dockerfile.simulator
     container_name: sensegrid-simulator
     restart: unless-stopped
+    profiles: ["simulator", "dev", "full"]  # Only in dev/testing profiles
     depends_on:
       backend:
         condition: service_healthy
@@ -107,12 +112,10 @@ services:
     networks:
       - sensegrid-network
 
-# Networks
 networks:
   sensegrid-network:
     driver: bridge
 
-# Volumes
 volumes:
   postgres_data:
     driver: local
