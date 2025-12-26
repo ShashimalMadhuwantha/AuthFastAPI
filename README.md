@@ -395,9 +395,17 @@ python -m http.server 3001
 
 ---
 
-### Step 5: Simulator Setup (Optional)
+### Step 5: Simulator Setup (Required for Testing)
 
-The simulator generates fake sensor data for testing.
+**Important:** The simulator is **essential for testing** the dashboard and backend. Without it, you won't see any sensor data flowing through the system.
+
+The simulator generates realistic sensor data (temperature, current) and publishes it via MQTT, allowing you to:
+- ✅ Test the **API Dashboard** (real-time charts and device status)
+- ✅ Test the **MQTT Dashboard** (live sensor readings)
+- ✅ Verify **device online/offline** detection
+- ✅ See **historical data** and time-series graphs
+- ✅ Test **MQTT message handling** in the backend
+
 
 1. **Navigate to project root**
 ```bash
@@ -442,14 +450,16 @@ Devices: LR1, LR2
 
 After completing all steps, you should have these terminals open:
 
-| Terminal | Command | URL |
-|----------|---------|-----|
-| 1 | `uvicorn main:app --reload` | http://localhost:8000 |
-| 2 | `python -m http.server 3000` | http://localhost:3000 |
-| 3 | `python -m http.server 3001` | http://localhost:3001 |
-| 4 | `python sensor_simulator.py` | - |
+| Terminal | Command | URL | Status |
+|----------|---------|-----|--------|
+| 1 | `uvicorn main:app --reload` | http://localhost:8000 | ✅ Required |
+| 2 | `python -m http.server 3000` | http://localhost:3000 | ✅ Required |
+| 3 | `python -m http.server 3001` | http://localhost:3001 | ✅ Required |
+| 4 | `python sensor_simulator.py` | - | ✅ **Required for Testing** |
 
 Plus PostgreSQL running (either locally or in Docker).
+
+**Note:** Without the simulator (Terminal 4), the dashboards will show no data!
 
 ---
 
