@@ -5,6 +5,7 @@ from app.db.database import SessionLocal
 from app.services.device_service import DeviceService
 from app.services.sensor_service import SensorService
 from app.schemas.device import SensorReadingCreate
+from app.models.sensor import SensorReading
 import json
 from typing import Optional
 
@@ -90,7 +91,6 @@ class MQTTService:
                             logger.info(f"Device {device_id} created and set to {status}")
                         elif status == "offline" and "not found" in str(e).lower():
                             # Silently ignore offline messages for non-existent devices
-                            # This happens when retained offline messages are received before device is created
                             logger.debug(f"Ignoring offline message for non-existent device {device_id}")
                         else:
                             raise e
@@ -110,6 +110,33 @@ class MQTTService:
                 value = float(data.get('value', 0))
                 unit = data.get('unit', None)
                 
+                # Check if device exists, if not create it
+                try:
+                    device = DeviceService.get_device_by_device_id(db, device_id)
+                    
+                    # If device exists but is offline, set it to online
+                    # This handles the case where simulator starts before backend
+                    if device.status == "offline":
+                        DeviceService.update_device_status(db, device_id, "online")
+                        logger.info(f"Device {device_id} automatically set to online (receiving sensor data)")
+                        
+                except Exception as e:
+                    # Device doesn't exist, create it
+                    if "not found" in str(e).lower():
+                        from app.schemas.device import DeviceCreate
+                        logger.info(f"Device {device_id} not found, creating new device")
+                        new_device = DeviceCreate(
+                            device_id=device_id,
+                            name=f"Device {device_id}",
+                            device_type="sensor_node"
+                        )
+                        DeviceService.create_device(db, new_device)
+                        DeviceService.update_device_status(db, device_id, "online")
+                        logger.info(f"Device {device_id} created and set to online")
+                    else:
+                        raise e
+                
+                # Store sensor reading
                 reading = SensorReadingCreate(
                     sensor_type=sensor_type,
                     value=value,
