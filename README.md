@@ -1,6 +1,6 @@
 # SenseGrid IoT Platform
 
-A complete IoT monitoring platform with real-time sensor data visualization, MQTT integration, and user authentication.
+A real-time IoT monitoring platform that helps you visualize sensor data from multiple devices. Built with FastAPI, TimescaleDB, and MQTT for efficient data handling.
 
 ![Platform](https://img.shields.io/badge/Platform-IoT-blue)
 ![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker)
@@ -9,263 +9,930 @@ A complete IoT monitoring platform with real-time sensor data visualization, MQT
 
 ---
 
-## 📋 Table of Contents
+## What's This About?
 
-- [Overview](#overview)
-- [Features](#features)
-- [Quick Start with Docker](#quick-start-with-docker)
-- [Developer Setup](#developer-setup)
-- [Configuration](#configuration)
-- [API Documentation](#api-documentation)
-- [Project Structure](#project-structure)
+SenseGrid lets you monitor IoT sensor devices in real-time. Think of it as a dashboard for all your sensors - whether you're tracking temperature, current, or any other measurements. The platform handles everything from data collection to visualization.
 
----
-
-## 🌟 Overview
-
-SenseGrid is a full-stack IoT platform for monitoring sensor devices in real-time with:
-
-- **Real-time Data Visualization** - Live charts and dashboards
-- **MQTT Integration** - Direct sensor data streaming
-- **User Authentication** - JWT-based secure auth
-- **Time-Series Database** - TimescaleDB for efficient storage
-- **Dual Dashboards** - API-based and MQTT-based monitoring
+**Key Features:**
+- Two different dashboards (API-based and MQTT-based)
+- Real-time data updates
+- Historical data analysis
+- User authentication
+- Time-series database for efficient storage
 
 ---
 
-## ✨ Features
+## What You Get
 
-### Dashboards
+### The Dashboards
 
 **API Dashboard** (Port 3000)
-- Real-time sensor data from REST API
-- Configurable refresh intervals (1s - 5min)
-- Historical data (1h - 7 days)
-- User authentication required
+This is your main dashboard. It pulls data from the REST API and lets you:
+- See live sensor readings
+- Adjust how often data refreshes (from 1 second to 5 minutes)
+- View historical data (anywhere from 1 hour to 7 days)
+- Requires login to access
 
 **MQTT Dashboard** (Port 3001)
-- Live MQTT data streaming
-- Real-time updates (no polling)
-- No authentication required
+A simpler, real-time dashboard that:
+- Connects directly to the MQTT broker
+- Updates instantly when sensors publish data
+- No login needed
+- Great for monitoring live data streams
 
-### IoT Features
-- Multiple sensor types: CT1, CT2, IR, K-Type
-- Device status monitoring
-- MQTT birth/death messages
-- Configurable topics
+### Sensor Support
+
+The platform works with these sensor types:
+- **CT1/CT2** - Current transformers for measuring electrical current
+- **IR** - Infrared temperature sensors
+- **K-Type** - Thermocouple temperature sensors
 
 ---
 
-## 🚀 Quick Start with Docker
+## Getting Started with Docker
 
-### Prerequisites
+This is the easiest way to get everything running. You'll need Docker Desktop installed on your machine.
 
-- Docker Desktop (v20.10+)
-- Docker Compose (v2.0+)
-- 4GB RAM minimum
+### What You Need
 
-### Steps
+- Docker Desktop (version 20.10 or newer)
+- At least 4GB of RAM
+- About 2GB of free disk space
 
-1. **Clone the repository**
+### Quick Setup
+
+1. **Get the code**
 ```bash
-git clone <repository-url>
-cd Docker
+git clone <your-repo-url>
+cd AuthFastAPI
 ```
 
-2. **Create environment file**
+2. **Set up your environment**
 ```bash
 cp .env.example .env
 ```
+The default settings work fine for local development, so you don't need to change anything unless you want to.
 
-3. **Start all services**
+3. **Start everything**
 ```bash
-docker-compose up -d --build
+docker-compose --profile full up -d
 ```
 
-4. **Access the platform**
+Wait about 30-40 seconds for all services to start up. The backend needs a moment to connect to the database.
 
-| Service | URL | Description |
-|---------|-----|-------------|
-| API Dashboard | http://localhost:3000 | Main dashboard |
-| MQTT Dashboard | http://localhost:3001 | Real-time MQTT |
-| API Docs | http://localhost:8000/docs | Swagger UI |
+4. **Check if it's working**
+```bash
+docker-compose ps
+```
+You should see all containers running and healthy.
 
-5. **Create first user**
+5. **Open your browser**
+- Main dashboard: http://localhost:3000
+- MQTT dashboard: http://localhost:3001
+- API documentation: http://localhost:8000/docs
+
+6. **Create your account**
 - Go to http://localhost:3000
 - Click "Sign Up"
-- Register and login
+- Fill in your details and you're good to go
 
-### Docker Commands
+### Using Docker Profiles
+
+Here's where it gets interesting. You don't always need to run everything. Docker profiles let you start only what you need.
+
+**Available profiles:**
+
+- `core` - Just the database and backend API
+- `frontend` - Database, backend, and both dashboards
+- `simulator` - Database, backend, and the sensor simulator
+- `dev` - Everything (recommended for development)
+- `prod` - Everything except the simulator (for production)
+- `full` - All services (same as dev)
+
+**Examples:**
 
 ```bash
-# Start services
-docker-compose up -d
+# Working on the backend? Start just the essentials
+docker-compose --profile core up -d
 
-# Stop services
+# Need to test the UI? Add the frontends
+docker-compose --profile frontend up -d
+
+# Want to see simulated sensor data?
+docker-compose --profile simulator up -d
+
+# Full development setup
+docker-compose --profile dev up -d
+
+# Production deployment (no simulator)
+docker-compose --profile prod up -d
+```
+
+**Useful commands:**
+
+```bash
+# Stop everything
 docker-compose down
 
-# View logs
+# See what's running
+docker-compose ps
+
+# Check the logs
 docker-compose logs -f
 
-# Restart service
+# Restart a specific service
 docker-compose restart backend
 
-# Rebuild
-docker-compose up -d --build
+# Rebuild and restart
+docker-compose --profile dev up -d --build
 
-# Remove everything
+# Clean slate (removes data too!)
 docker-compose down -v
 ```
 
+### Docker Image Sizes
+
+We've optimized the images using multi-stage builds and Alpine Linux:
+
+| Service | Size | What We Did |
+|---------|------|-------------|
+| Backend | 192MB | Multi-stage build with Alpine |
+| Simulator | 84.6MB | Stripped down to essentials |
+| Frontend | 74.6MB | Nginx on Alpine |
+| Frontend2 | 74.3MB | Nginx on Alpine |
+
+Total: **426MB** (about 45% smaller than using standard Debian images)
+
 ---
 
-## 💻 Developer Setup
+## Developer Setup
 
-For local development without Docker.
+Want to run things locally without Docker? Follow these steps to set up each component.
 
 ### Prerequisites
 
-- Python 3.11+
-- PostgreSQL 15+ or TimescaleDB
-- Git
+- **Python 3.11+** - [Download here](https://www.python.org/downloads/)
+- **PostgreSQL 15+** - Choose your setup method below
+- **Code Editor** - VS Code recommended
 
-### Backend Setup
+---
 
-1. **Install PostgreSQL and create database**
+### Step 1: Database Setup
+
+You have two options for the database:
+
+#### Option A: Install PostgreSQL Locally (Recommended for Development)
+
+**Windows:**
+1. Download from [PostgreSQL Downloads](https://www.postgresql.org/download/windows/)
+2. Run the installer (remember the password you set!)
+3. PostgreSQL will run on port 5432 by default
+
+**Mac:**
 ```bash
+brew install postgresql@15
+brew services start postgresql@15
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+**Create the database:**
+```bash
+# Connect to PostgreSQL
 psql -U postgres
+
+# Run these commands
 CREATE DATABASE sensegrid_db;
 CREATE USER sensegrid WITH PASSWORD 'sensegrid123';
 GRANT ALL PRIVILEGES ON DATABASE sensegrid_db TO sensegrid;
+
+# Optional: Enable TimescaleDB extension (if installed)
+\c sensegrid_db
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+
+# Exit
 \q
 ```
 
-2. **Setup Python environment**
-```bash
-cd backend
+#### Option B: Use Docker for Database Only
 
-# Create virtual environment
-python -m venv venv
-
-# Activate
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-3. **Configure environment**
-```bash
-cp .env.example .env
-# Edit .env with your database credentials
-```
-
-4. **Run backend**
-```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### Frontend Setup
+If you don't want to install PostgreSQL locally, just run the database in Docker:
 
 ```bash
-# Open new terminal
-cd frontend
+# Start only the database
+docker run -d \
+  --name sensegrid-db \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=sensegrid_db \
+  -p 5432:5432 \
+  timescale/timescaledb:latest-pg16
 
-# Serve with Python
-python -m http.server 3000
+# Check if it's running
+docker ps
 
-# Or with Node.js
-npm install -g http-server
-http-server -p 3000
-```
+# View logs
+docker logs sensegrid-db
 
-### Simulator Setup
+# Stop it later
+docker stop sensegrid-db
 
-```bash
-# Open new terminal
-cd Docker
+# Start it again
+docker start sensegrid-db
 
-# Activate backend venv
-# Windows:
-backend\venv\Scripts\activate
-# Linux/Mac:
-source backend/venv/bin/activate
-
-# Run simulator
-python sensor_simulator.py
-```
-
-### Python Dependencies
-
-```txt
-# Web Framework
-fastapi==0.104.1              # API framework
-uvicorn[standard]==0.24.0     # ASGI server
-
-# Database
-sqlalchemy==2.0.23            # ORM
-psycopg2-binary==2.9.9        # PostgreSQL adapter
-
-# Authentication
-python-jose[cryptography]==3.3.0  # JWT tokens
-passlib[bcrypt]==1.7.4        # Password hashing
-
-# MQTT
-paho-mqtt==1.6.1              # MQTT client
-
-# Validation
-pydantic==2.5.0               # Data validation
-
-# Utilities
-python-dotenv==1.0.0          # Environment variables
-python-multipart==0.0.6       # Form data
-requests==2.31.0              # HTTP client
+# Remove it completely
+docker rm -f sensegrid-db
 ```
 
 ---
 
-## ⚙️ Configuration
+### Step 2: Backend Setup
 
-### Environment Variables
+1. **Navigate to backend directory**
+```bash
+cd backend
+```
+
+2. **Create virtual environment**
+```bash
+# Create venv
+python -m venv venv
+
+# Activate it
+# Windows:
+venv\Scripts\activate
+
+# Mac/Linux:
+source venv/bin/activate
+
+# You should see (venv) in your terminal now
+```
+
+3. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+4. **Configure environment variables**
+```bash
+# Copy example file
+cp .env.example .env
+
+# Now edit the .env file
+```
+
+**Edit `backend/.env` with these settings:**
 
 ```bash
+# Database Configuration
+DATABASE_URL=postgresql://sensegrid:sensegrid123@localhost:5432/sensegrid_db
+
+# If using Docker database with default settings:
+# DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sensegrid_db
+
+# Security (generate a new secret key for production!)
+SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# MQTT Configuration
+MQTT_BROKER=broker.hivemq.com
+MQTT_PORT=1883
+MQTT_TOPIC_PREFIX=sensegrid
+```
+
+5. **Run the backend**
+```bash
+# Make sure you're in the backend directory with venv activated
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+You should see:
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:     Application startup complete.
+```
+
+**Test it:** Open http://localhost:8000/docs in your browser
+
+---
+
+### Step 3: Frontend Setup (API Dashboard)
+
+1. **Navigate to frontend directory**
+```bash
+# Open a NEW terminal
+cd frontend
+```
+
+2. **Configure API endpoint**
+
+Edit `frontend/config.js`:
+```javascript
+const API_BASE_URL = 'http://localhost:8000';
+```
+
+This should already be set correctly, but verify it points to your backend.
+
+3. **Serve the frontend**
+
+**Option A: Python HTTP Server (Easiest)**
+```bash
+python -m http.server 3000
+```
+
+**Option B: Node.js HTTP Server**
+```bash
+# Install once globally
+npm install -g http-server
+
+# Run it
+http-server -p 3000
+```
+
+**Option C: VS Code Live Server Extension**
+- Install "Live Server" extension in VS Code
+- Right-click `index.html` → "Open with Live Server"
+- Change port to 3000 in settings if needed
+
+**Access it:** http://localhost:3000
+
+---
+
+### Step 4: Frontend2 Setup (MQTT Dashboard)
+
+1. **Navigate to frontend2 directory**
+```bash
+# Open another NEW terminal
+cd frontend2
+```
+
+2. **Configure MQTT broker**
+
+Edit `frontend2/js/mqtt-dashboard.js`:
+```javascript
+const MQTT_CONFIG = {
+    BROKER: 'wss://broker.hivemq.com:8884/mqtt',  // WebSocket URL
+    TOPIC_PREFIX: 'sensegrid',
+    DEVICES: ['LR1', 'LR2'],
+    SENSOR_TYPES: ['CT1', 'CT2', 'IR', 'K-Type']
+};
+```
+
+This should already be configured, but verify the broker URL is correct.
+
+3. **Serve the frontend**
+```bash
+python -m http.server 3001
+```
+
+**Access it:** http://localhost:3001
+
+---
+
+### Step 5: Simulator Setup (Optional)
+
+The simulator generates fake sensor data for testing.
+
+1. **Navigate to project root**
+```bash
+# Open another NEW terminal
+cd AuthFastAPI
+```
+
+2. **Activate backend's virtual environment**
+```bash
+# Windows:
+backend\venv\Scripts\activate
+
+# Mac/Linux:
+source backend/venv/bin/activate
+```
+
+3. **Run the simulator**
+```bash
+python sensor_simulator.py
+```
+
+You should see:
+```
+============================================================
+IoT Sensor Data Simulator
+============================================================
+MQTT Broker: broker.hivemq.com:1883
+Topic Prefix: sensegrid
+Devices: LR1, LR2
+============================================================
+
+[LR1] Connected to MQTT broker
+[LR1] Sent Birth message: online
+[LR1] CT1: 2.45 A
+[LR1] CT2: 3.12 A
+...
+```
+
+---
+
+### What You Should Have Running
+
+After completing all steps, you should have these terminals open:
+
+| Terminal | Command | URL |
+|----------|---------|-----|
+| 1 | `uvicorn main:app --reload` | http://localhost:8000 |
+| 2 | `python -m http.server 3000` | http://localhost:3000 |
+| 3 | `python -m http.server 3001` | http://localhost:3001 |
+| 4 | `python sensor_simulator.py` | - |
+
+Plus PostgreSQL running (either locally or in Docker).
+
+---
+
+### Development Workflow
+
+**Making changes:**
+
+1. **Backend changes** - Save the file, uvicorn auto-reloads
+2. **Frontend changes** - Save and refresh browser (Ctrl+Shift+R)
+3. **Database changes** - Restart backend to apply migrations
+
+**Stopping everything:**
+- Press `Ctrl+C` in each terminal
+- If using Docker database: `docker stop sensegrid-db`
+
+**Starting again:**
+- Run the same commands in each terminal
+- If using Docker database: `docker start sensegrid-db`
+
+---
+
+### Python Dependencies Explained
+
+Here's what each package in `requirements.txt` does:
+
+```txt
+# Web Framework
+fastapi==0.104.1              # Modern async web framework
+uvicorn[standard]==0.24.0     # ASGI server to run FastAPI
+
 # Database
+sqlalchemy==2.0.23            # ORM for database operations
+psycopg2-binary==2.9.9        # PostgreSQL adapter
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0  # JWT token handling
+passlib[bcrypt]==1.7.4        # Password hashing
+
+# MQTT
+paho-mqtt==1.6.1              # MQTT client library
+
+# Data Validation
+pydantic==2.5.0               # Request/response validation
+
+# Utilities
+python-dotenv==1.0.0          # Load .env files
+python-multipart==0.0.6       # Handle file uploads
+requests==2.31.0              # HTTP client for health checks
+```
+
+---
+
+### Troubleshooting Local Development
+
+**Backend won't start:**
+```bash
+# Check if port 8000 is in use
+# Windows:
+netstat -ano | findstr :8000
+
+# Mac/Linux:
+lsof -i :8000
+
+# Try a different port
+uvicorn main:app --reload --port 8001
+```
+
+**Can't connect to database:**
+```bash
+# Test PostgreSQL connection
+psql -U sensegrid -d sensegrid_db -h localhost
+
+# Check if PostgreSQL is running
+# Windows: Check Services
+# Mac: brew services list
+# Linux: sudo systemctl status postgresql
+```
+
+**Frontend can't reach backend:**
+- Check `config.js` has correct backend URL
+- Make sure backend is running on port 8000
+- Check browser console for CORS errors
+
+**Simulator not publishing data:**
+- Check MQTT broker is accessible
+- Verify `MQTT_BROKER` in environment
+- Check simulator logs for connection errors
+pydantic==2.5.0               # Validate data
+
+# Utilities
+python-dotenv==1.0.0          # Load .env files
+python-multipart==0.0.6       # Handle file uploads
+requests==2.31.0              # Make HTTP requests
+```
+
+---
+
+## Environment Files Guide
+
+The project uses multiple `.env` files for different purposes. Here's what each one does and how to configure them.
+
+### Overview of .env Files
+
+```
+AuthFastAPI/
+├── .env                    # Docker Compose configuration (root level)
+├── .env.example           # Template for root .env
+├── backend/
+│   ├── .env              # Backend application configuration
+│   └── .env.example      # Template for backend .env
+└── frontend/
+    ├── .env              # Frontend configuration (optional)
+    └── .env.example      # Template for frontend .env
+```
+
+---
+
+### 1. Root `.env` (Docker Compose)
+
+**Location:** `AuthFastAPI/.env`
+
+**Purpose:** Used by `docker-compose.yml` to configure all Docker containers.
+
+**When to use:** When running with Docker (`docker-compose up`)
+
+**Setup:**
+```bash
+# Copy the example file
+cp .env.example .env
+```
+
+**Configuration:**
+
+```bash
+# Database Configuration
+POSTGRES_USER=postgres              # PostgreSQL username
+POSTGRES_PASSWORD=postgres          # PostgreSQL password (CHANGE IN PRODUCTION!)
+POSTGRES_DB=sensegrid_db           # Database name
+
+# Backend Configuration
+DATABASE_URL=postgresql://postgres:postgres@db:5432/sensegrid_db
+SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# MQTT Configuration
+MQTT_BROKER=broker.hivemq.com      # MQTT broker address
+MQTT_PORT=1883                      # MQTT port
+MQTT_TOPIC_PREFIX=sensegrid         # Topic prefix for all messages
+
+# Application Ports
+BACKEND_PORT=8000                   # Backend API port
+FRONTEND_PORT=3000                  # API Dashboard port
+FRONTEND2_PORT=3001                 # MQTT Dashboard port
+DATABASE_PORT=5432                  # PostgreSQL port
+```
+
+**Important Notes:**
+- `DATABASE_URL` uses `@db:5432` because Docker containers communicate via service names
+- All services read from this file when running in Docker
+- Port mappings: `HOST_PORT:CONTAINER_PORT`
+
+---
+
+### 2. Backend `.env`
+
+**Location:** `AuthFastAPI/backend/.env`
+
+**Purpose:** Used by the FastAPI backend application (both Docker and local development).
+
+**When to use:** 
+- Local development (running backend outside Docker)
+- Docker also reads this, but root `.env` takes precedence
+
+**Setup:**
+```bash
+cd backend
+cp .env.example .env
+```
+
+**Configuration:**
+
+```bash
+# Database Configuration
+# For LOCAL development:
+DATABASE_URL=postgresql://sensegrid:sensegrid123@localhost:5432/sensegrid_db
+
+# For Docker database only:
+# DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sensegrid_db
+
+# For full Docker setup (use root .env instead):
+# DATABASE_URL=postgresql://postgres:postgres@db:5432/sensegrid_db
+
+# JWT Authentication
+SECRET_KEY=your-secret-key-here-change-this-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# MQTT Configuration
+MQTT_BROKER=broker.hivemq.com
+MQTT_PORT=1883
+MQTT_TOPIC_PREFIX=sensegrid
+
+# Application Settings
+APP_PORT=8000
+
+# PgAdmin Configuration (Optional)
+PGADMIN_EMAIL=admin@sensegrid.com
+PGADMIN_PASSWORD=admin
+PGADMIN_PORT=5050
+```
+
+**Key Differences from Root .env:**
+- `DATABASE_URL` uses `@localhost:5432` for local development
+- Includes PgAdmin settings (optional database management tool)
+- More detailed comments for developers
+
+**How to generate a secure SECRET_KEY:**
+```bash
+# Using OpenSSL
+openssl rand -hex 32
+
+# Using Python
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+---
+
+### 3. Frontend `.env`
+
+**Location:** `AuthFastAPI/frontend/.env`
+
+**Purpose:** Frontend configuration (mainly for Nginx in Docker).
+
+**When to use:** When customizing frontend port or settings.
+
+**Setup:**
+```bash
+cd frontend
+cp .env.example .env
+```
+
+**Configuration:**
+
+```bash
+# Frontend Configuration
+FRONTEND_PORT=3000              # Port for the frontend application
+```
+
+**Note:** 
+- This is minimal because frontend is mostly static files
+- API endpoint is configured in `frontend/config.js` instead
+- In Docker, the root `.env` FRONTEND_PORT is used
+
+---
+
+### Configuration Scenarios
+
+#### Scenario 1: Full Docker Setup (Recommended for Beginners)
+
+**Use:** Root `.env` only
+
+```bash
+# 1. Configure root .env
+cp .env.example .env
+
+# 2. Start everything
+docker-compose --profile full up -d
+```
+
+**Settings:**
+- `DATABASE_URL` with `@db:5432` (Docker service name)
+- All ports as needed
+- Default credentials are fine for development
+
+---
+
+#### Scenario 2: Local Development (No Docker)
+
+**Use:** Backend `.env` only
+
+```bash
+# 1. Configure backend .env
+cd backend
+cp .env.example .env
+
+# 2. Edit backend/.env
+# Set DATABASE_URL=postgresql://sensegrid:sensegrid123@localhost:5432/sensegrid_db
+
+# 3. Run backend
+uvicorn main:app --reload
+```
+
+**Settings:**
+- `DATABASE_URL` with `@localhost:5432`
+- Local PostgreSQL credentials
+- Generate new `SECRET_KEY`
+
+---
+
+#### Scenario 3: Hybrid (Docker Database + Local Backend)
+
+**Use:** Root `.env` for database, Backend `.env` for application
+
+```bash
+# 1. Start database only
+docker-compose --profile core up -d db
+
+# 2. Configure backend .env
+cd backend
+cp .env.example .env
+
+# 3. Edit backend/.env
+# Set DATABASE_URL=postgresql://postgres:postgres@localhost:5432/sensegrid_db
+
+# 4. Run backend locally
+uvicorn main:app --reload
+```
+
+**Settings:**
+- Backend `.env` uses `@localhost:5432` (Docker database exposed on host)
+- Use same credentials as root `.env`
+
+---
+
+### Environment Variables Reference
+
+#### Database Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `POSTGRES_USER` | PostgreSQL username | `postgres` |
+| `POSTGRES_PASSWORD` | PostgreSQL password | `postgres` |
+| `POSTGRES_DB` | Database name | `sensegrid_db` |
+| `DATABASE_URL` | Full connection string | `postgresql://user:pass@host:port/db` |
+| `DATABASE_PORT` | PostgreSQL port | `5432` |
+
+#### Security Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `SECRET_KEY` | JWT signing key | `09d25e094faa6ca...` |
+| `ALGORITHM` | JWT algorithm | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiry time | `30` |
+
+#### MQTT Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `MQTT_BROKER` | MQTT broker address | `broker.hivemq.com` |
+| `MQTT_PORT` | MQTT port | `1883` |
+| `MQTT_TOPIC_PREFIX` | Topic prefix | `sensegrid` |
+
+#### Port Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `BACKEND_PORT` | Backend API port | `8000` |
+| `FRONTEND_PORT` | API Dashboard port | `3000` |
+| `FRONTEND2_PORT` | MQTT Dashboard port | `3001` |
+| `DATABASE_PORT` | PostgreSQL port | `5432` |
+
+---
+
+### Best Practices
+
+1. **Never commit `.env` files to Git**
+   - They're in `.gitignore` by default
+   - Only commit `.env.example` files
+
+2. **Use different credentials for production**
+   - Change `POSTGRES_PASSWORD`
+   - Generate new `SECRET_KEY`
+   - Use strong passwords
+
+3. **Keep `.env.example` updated**
+   - When adding new variables, update the example
+   - Add comments explaining each variable
+
+4. **Use environment-specific files**
+   - `.env.dev` for development
+   - `.env.prod` for production
+   - `.env.test` for testing
+
+5. **Validate your configuration**
+   ```bash
+   # Check if backend can connect to database
+   docker-compose logs backend
+   
+   # Test database connection
+   psql -U postgres -d sensegrid_db -h localhost
+   ```
+
+---
+
+### Troubleshooting .env Issues
+
+**Backend can't connect to database:**
+```bash
+# Check DATABASE_URL format
+# Should be: postgresql://username:password@host:port/database
+
+# For Docker: @db:5432
+# For Local: @localhost:5432
+```
+
+**Port conflicts:**
+```bash
+# Change ports in .env
+BACKEND_PORT=8001
+FRONTEND_PORT=3001
+
+# Restart services
+docker-compose down
+docker-compose --profile dev up -d
+```
+
+**Changes not taking effect:**
+```bash
+# Restart Docker containers
+docker-compose down
+docker-compose --profile dev up -d
+
+# For local development, restart the service
+# Ctrl+C and run again
+```
+
+**Can't find .env file:**
+```bash
+# Create from example
+cp .env.example .env
+
+# Check if it exists
+ls -la .env
+
+# Windows:
+dir .env
+```
+
+---
+
+## Configuration
+
+All settings are in the `.env` file. Here's what you can configure:
+
+```bash
+# Database settings
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=sensegrid_db
 DATABASE_PORT=5432
 
-# Backend
+# Backend settings
 BACKEND_PORT=8000
 DATABASE_URL=postgresql://postgres:postgres@db:5432/sensegrid_db
-SECRET_KEY=your-secret-key
+SECRET_KEY=your-secret-key-here
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-# MQTT
+# MQTT settings
 MQTT_BROKER=broker.hivemq.com
 MQTT_PORT=1883
 MQTT_TOPIC_PREFIX=sensegrid
 
-# Frontend
+# Frontend ports
 FRONTEND_PORT=3000
 FRONTEND2_PORT=3001
 ```
 
-### Changing Configuration
-
-1. Edit `.env` file
-2. Restart services: `docker-compose down && docker-compose up -d`
+To change any setting, just edit the `.env` file and restart:
+```bash
+docker-compose down
+docker-compose --profile dev up -d
+```
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
-### Authentication
+The backend provides a REST API for everything. Once it's running, check out the interactive docs at http://localhost:8000/docs
 
-**Register**
+### Quick Examples
+
+**Sign up:**
 ```http
 POST /api/v1/auth/signup
 Content-Type: application/json
@@ -277,7 +944,7 @@ Content-Type: application/json
 }
 ```
 
-**Login**
+**Log in:**
 ```http
 POST /api/v1/auth/signin
 Content-Type: application/json
@@ -288,34 +955,34 @@ Content-Type: application/json
 }
 ```
 
-### Devices
-
-**Get All Devices**
+**Get all devices:**
 ```http
 GET /api/v1/devices/
-Authorization: Bearer <token>
+Authorization: Bearer <your-token>
 ```
 
-**Get Sensor Data**
+**Get sensor data:**
 ```http
-GET /api/v1/devices/{device_id}/sensors/{sensor_type}/timeseries?hours=24
-Authorization: Bearer <token>
+GET /api/v1/devices/LR1/sensors/CT1/timeseries?hours=24
+Authorization: Bearer <your-token>
 ```
 
-**Interactive Docs:** http://localhost:8000/docs
+The interactive docs let you try all of this right in your browser. Much easier than using curl!
 
 ---
 
-## 📁 Project Structure
+## Project Structure
+
+Here's how everything is organized:
 
 ```
-Docker/
+AuthFastAPI/
 ├── backend/                    # FastAPI backend
 │   ├── app/
-│   │   ├── api/v1/            # API routes
-│   │   ├── core/              # Config, database, security
+│   │   ├── api/v1/            # API endpoints
+│   │   ├── core/              # Config and security
 │   │   ├── models/            # Database models
-│   │   ├── schemas/           # Pydantic schemas
+│   │   ├── schemas/           # Data validation
 │   │   └── services/          # Business logic
 │   ├── Dockerfile
 │   └── requirements.txt
@@ -333,7 +1000,7 @@ Docker/
 │   ├── index.html
 │   └── Dockerfile
 │
-├── sensor_simulator.py         # IoT simulator
+├── sensor_simulator.py         # Generates fake sensor data
 ├── Dockerfile.simulator
 ├── docker-compose.yml
 ├── .env.example
@@ -342,109 +1009,64 @@ Docker/
 
 ---
 
-## 🐳 Docker Details
+## Common Issues
 
-### Image Sizes
+### Services won't start
 
-| Service | Size | Base Image |
-|---------|------|------------|
-| Backend | 192MB | python:3.11-alpine |
-| Simulator | 84.6MB | python:3.11-alpine |
-| Frontend | 74.6MB | nginx:1.25-alpine |
-| Frontend2 | 74.3MB | nginx:1.25-alpine |
-| **Total** | **426MB** | - |
-
-### Multi-Stage Builds
-
-All images use multi-stage builds for optimization:
-- **Builder stage**: Compiles dependencies
-- **Runtime stage**: Only includes necessary files
-- **Result**: 45% smaller than Debian-based images
-
-### Build Commands
-
+Check the logs to see what's wrong:
 ```bash
-# Build all images
-docker-compose build
-
-# Build specific service
-docker-compose build backend
-
-# Build without cache
-docker-compose build --no-cache
-
-# View image sizes
-docker images docker-*
-```
-
----
-
-## 🔧 Troubleshooting
-
-### Services Not Starting
-
-```bash
-# Check logs
 docker-compose logs -f
-
-# Restart all
-docker-compose down
-docker-compose up -d --build
 ```
 
-### Backend Unhealthy
+Usually it's either the database taking too long to start, or a port conflict.
 
+### Backend shows as "unhealthy"
+
+Give it a minute. The backend waits for the database to be ready, which can take 30-40 seconds on first startup.
+
+### Frontend shows a blank page
+
+Hard refresh your browser (Ctrl+Shift+R on Windows, Cmd+Shift+R on Mac). 
+### No sensor data appearing
+
+Make sure the simulator is running:
 ```bash
-# Check backend logs
-docker-compose logs backend
-
-# Wait for database
-# Backend needs 30-40 seconds to start
-```
-
-### Frontend Not Loading
-
-- Hard refresh: `Ctrl + Shift + R`
-- Or use incognito mode
-
-### No Sensor Data
-
-```bash
-# Restart simulator
-docker-compose restart simulator
-
-# Check logs
 docker-compose logs simulator
 ```
 
-### Port Conflicts
+You should see it connecting to MQTT and publishing data every second.
 
+### Port already in use
+
+Something else is using one of the ports. Either stop that service, or change the port in `.env`:
 ```bash
-# Change ports in .env
 BACKEND_PORT=8001
 FRONTEND_PORT=3001
 ```
 
 ---
 
-## 🔒 Security Notes
+## Security Notes
 
-**⚠️ For Production:**
+**Important:** The default configuration is for development only!
 
-1. Change default passwords in `.env`
-2. Generate new `SECRET_KEY`
-3. Use HTTPS
-4. Restrict database access
-5. Configure CORS properly
-6. Use environment-specific configs
+For production:
+- Change all passwords in `.env`
+- Generate a new `SECRET_KEY`
+- Use HTTPS
+- Don't expose the database port publicly
+- Set up proper CORS settings in the backend
+
+---
+
+
+## License
+
+This project is provided as-is for educational and development purposes.
 
 ---
 
-## 📝 License
-
-This project is provided as-is for educational purposes.
-
----
+**Questions?** Check the logs first (`docker-compose logs -f`), they usually tell you what's wrong.
 
 **Version:** 1.0.0  
 **Last Updated:** December 2024
