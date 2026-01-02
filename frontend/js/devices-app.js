@@ -249,14 +249,13 @@ class DevicesDashboard {
     }
 
     /**
-     * Update all values without page refresh
+     * Update all values without page refresh (optimized - only fetches latest values)
      */
     async updateValues() {
         console.log('🔄 Updating values...');
 
         try {
             const devices = await DevicesAPI.getAllDevices();
-            const timeParam = this.customDateRange || this.timePeriodHours;
 
             for (const device of devices) {
                 const deviceId = device.device_id;
@@ -270,30 +269,91 @@ class DevicesDashboard {
                     console.error(`Error updating device status for ${deviceId}:`, err);
                 }
 
-                // Update sensor values
+                // Update sensor values (OPTIMIZED: only fetch latest)
                 for (const type of CONFIG.SENSOR_TYPES) {
                     try {
-                        const [latest, stats, timeseries] = await Promise.all([
-                            DevicesAPI.getLatestReading(deviceId, type),
-                            DevicesAPI.getSensorStats(deviceId, type, timeParam),
-                            DevicesAPI.getTimeSeries(deviceId, type, timeParam)
-                        ]);
+                        // Only fetch latest value (not stats or timeseries)
+                        const latest = await DevicesAPI.getLatestReading(deviceId, type);
 
-                        const sensorCard = new SensorCard(deviceId, type, latest, stats);
-                        sensorCard.update(latest, stats);
+                        // Update the displayed value
+                        const valueEl = document.getElementById(`value-${deviceId}-${type}`);
+                        if (valueEl && latest) {
+                            valueEl.textContent = latest.value.toFixed(0);
+                        }
 
-                        // Update chart
-                        this.updateChart(deviceId, type, timeseries);
+                        // Update timestamp
+                        const footerEl = document.getElementById(`footer-${deviceId}-${type}`);
+                        if (footerEl && latest) {
+                            footerEl.setAttribute('data-timestamp', latest.timestamp);
+                            const sensorCard = new SensorCard('', '', { timestamp: latest.timestamp }, {});
+                            footerEl.textContent = `Last update ${sensorCard.getRelativeTime(latest.timestamp)}`;
+                        }
+
+                        // Add new point to chart (in memory)
+                        if (latest) {
+                            this.addPointToChart(deviceId, type, latest.value, latest.timestamp);
+                        }
+
+                        // Recalculate and update stats from chart data (in memory)
+                        this.updateStatsFromChart(deviceId, type);
+
                     } catch (err) {
                         console.error(`Error updating ${deviceId}/${type}:`, err);
                     }
                 }
             }
 
-            console.log('✅ Values updated!');
+            console.log('✅ Values updated');
         } catch (error) {
             console.error('❌ Error updating values:', error);
         }
+    }
+
+    /**
+     * Add a new data point to an existing chart (in memory)
+     */
+    addPointToChart(deviceId, sensorType, value, timestamp) {
+        const chartKey = `${deviceId}-${sensorType}`;
+        const chart = this.charts[chartKey];
+
+        if (!chart) return;
+
+        const newTimestamp = new Date(timestamp);
+
+        // Add new data point
+        chart.data.labels.push(newTimestamp);
+        chart.data.datasets[0].data.push(value);
+
+        // Keep only last 100 points for performance
+        if (chart.data.labels.length > 100) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+        }
+
+        // Update chart (no animation for smooth updates)
+        chart.update('none');
+    }
+
+    /**
+     * Recalculate min/max stats from chart data (in memory)
+     */
+    updateStatsFromChart(deviceId, sensorType) {
+        const chartKey = `${deviceId}-${sensorType}`;
+        const chart = this.charts[chartKey];
+
+        if (!chart || chart.data.datasets[0].data.length === 0) return;
+
+        const values = chart.data.datasets[0].data;
+        const minValue = Math.min(...values);
+        const maxValue = Math.max(...values);
+
+        // Update MIN display
+        const minEl = document.getElementById(`min-${deviceId}-${sensorType}`);
+        if (minEl) minEl.textContent = minValue.toFixed(0);
+
+        // Update MAX display
+        const maxEl = document.getElementById(`max-${deviceId}-${sensorType}`);
+        if (maxEl) maxEl.textContent = maxValue.toFixed(0);
     }
 
     /**
