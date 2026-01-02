@@ -278,6 +278,7 @@
             console.log('Refresh interval updated to:', interval, 'seconds');
         }
 
+
         function applyCustomDateRange() {
             const startDate = document.getElementById('startDateTime').value;
             const endDate = document.getElementById('endDateTime').value;
@@ -295,7 +296,11 @@
                 return;
             }
 
-            // Store in localStorage
+            // Convert to ISO format for API (YYYY-MM-DDTHH:mm:ss)
+            const startISO = start.toISOString().slice(0, 19);
+            const endISO = end.toISOString().slice(0, 19);
+
+            // Store in localStorage (keep original format for input fields)
             localStorage.setItem('customStartDate', startDate);
             localStorage.setItem('customEndDate', endDate);
 
@@ -303,15 +308,18 @@
             const displayText = `${start.toLocaleString()} - ${end.toLocaleString()}`;
             document.getElementById('currentPeriodDisplay').textContent = displayText;
 
-            // Trigger event for devices-app.js to update
+            // Trigger event for devices-app.js to update (send ISO format)
             window.dispatchEvent(new CustomEvent('dateRangeChanged', {
                 detail: {
-                    startDate: startDate,
-                    endDate: endDate
+                    startDate: startISO,
+                    endDate: endISO
                 }
             }));
 
-            console.log('Date range updated:', startDate, 'to', endDate);
+            console.log('Date range updated:', startISO, 'to', endISO);
+
+            // Close modal
+            closeSettingsModal();
         }
 
         // Close modal when clicking outside
@@ -350,13 +358,17 @@
                 const displayText = `${start.toLocaleString()} - ${end.toLocaleString()}`;
                 document.getElementById('currentPeriodDisplay').textContent = displayText;
 
+                // Convert to ISO format for API
+                const startISO = start.toISOString().slice(0, 19);
+                const endISO = end.toISOString().slice(0, 19);
+
                 // Trigger event so devices-app.js knows about the saved range
                 // Use setTimeout to ensure devices-app.js has initialized its listeners
                 setTimeout(() => {
                     window.dispatchEvent(new CustomEvent('dateRangeChanged', {
                         detail: {
-                            startDate: savedStartDate,
-                            endDate: savedEndDate
+                            startDate: startISO,
+                            endDate: endISO
                         }
                     }));
                 }, 100);

@@ -117,14 +117,28 @@ class DevicesDashboard {
             );
 
             // Render all devices
-            container.innerHTML = devicesData
-                .filter(data => data !== null)
+            const validDevices = devicesData.filter(data => data !== null && data.sensors.length > 0);
+
+            if (validDevices.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">📊</div>
+                        <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No Data Available</h3>
+                        <p class="text-gray-600 dark:text-gray-400">
+                            No sensor data found for the selected date range.<br>
+                            Try selecting a different time period or check if sensors are publishing data.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = validDevices
                 .map(deviceData => this.renderDevice(deviceData))
                 .join('');
 
             // Initialize all charts
-            devicesData.forEach(deviceData => {
-                if (!deviceData) return;
+            validDevices.forEach(deviceData => {
                 deviceData.sensors.forEach(({ type, timeseries }) => {
                     this.initChart(deviceData.deviceId, type, timeseries);
                 });
@@ -133,7 +147,7 @@ class DevicesDashboard {
             console.log('✅ All devices loaded successfully');
         } catch (error) {
             console.error('❌ Error loading devices:', error);
-            container.innerHTML = '<div class="text-center py-8 text-red-600 dark:text-red-400">Error loading devices</div>';
+            container.innerHTML = '<div class="text-center py-8 text-red-600 dark:text-red-400">Error loading devices. Please check console for details.</div>';
         }
     }
 
