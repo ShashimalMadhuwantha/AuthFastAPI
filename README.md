@@ -24,21 +24,28 @@ SenseGrid lets you monitor IoT sensor devices in real-time. Think of it as a das
 
 ## What You Get
 
-### The Dashboards
+### The Dashboard
 
-**API Dashboard** (Port 3000)
-This is your main dashboard. It pulls data from the REST API and lets you:
-- See live sensor readings
-- Adjust how often data refreshes (from 1 second to 5 minutes)
-- View historical data (anywhere from 1 hour to 7 days)
-- Requires login to access
+**Unified Dashboard** (Port 3000)
+This is your comprehensive IoT monitoring platform with multiple views:
 
-**MQTT Dashboard** (Port 3001)
-A simpler, real-time dashboard that:
-- Connects directly to the MQTT broker
-- Updates instantly when sensors publish data
-- No login needed
-- Great for monitoring live data streams
+**Main Features:**
+- **User Management** - Create, update, and manage user accounts
+- **Devices Dashboard** - API-based real-time sensor monitoring with:
+  - Live sensor readings with customizable refresh intervals (1 second to 5 minutes)
+  - Historical data analysis with custom date range selection
+  - Time-series charts and statistics (min/max/avg)
+  - Device online/offline status tracking
+- **MQTT Dashboard** - Direct MQTT broker connection for:
+  - Real-time data streaming from MQTT topics
+  - Instant updates when sensors publish data
+  - Custom date range filtering for historical view
+  - Live charts and sensor statistics
+
+**Authentication:**
+- Secure login/signup system
+- JWT-based authentication
+- Session management
 
 ### Sensor Support
 
@@ -87,14 +94,19 @@ docker-compose ps
 You should see all containers running and healthy.
 
 5. **Open your browser**
-- Main dashboard: http://localhost:3000
-- MQTT dashboard: http://localhost:3001
+- Dashboard: http://localhost:3000
 - API documentation: http://localhost:8000/docs
 
 6. **Create your account**
 - Go to http://localhost:3000
 - Click "Sign Up"
 - Fill in your details and you're good to go
+
+7. **Navigate the dashboard**
+- **Dashboard** - Main overview
+- **Manage Users** - User management (CRUD operations)
+- **Devices** - API-based sensor monitoring with charts
+- **MQTT Dashboard** - Real-time MQTT data streaming
 
 ### Using Docker Profiles
 
@@ -103,7 +115,7 @@ Here's where it gets interesting. You don't always need to run everything. Docke
 **Available profiles:**
 
 - `core` - Just the database and backend API
-- `frontend` - Database, backend, and both dashboards
+- `frontend` - Database, backend, and frontend dashboard
 - `simulator` - Database, backend, and the sensor simulator
 - `dev` - Everything (recommended for development)
 - `prod` - Everything except the simulator (for production)
@@ -115,7 +127,7 @@ Here's where it gets interesting. You don't always need to run everything. Docke
 # Working on the backend? Start just the essentials
 docker-compose --profile core up -d
 
-# Need to test the UI? Add the frontends
+# Need to test the UI? Add the frontend
 docker-compose --profile frontend up -d
 
 # Want to see simulated sensor data?
@@ -159,9 +171,8 @@ We've optimized the images using multi-stage builds and Alpine Linux:
 | Backend | 192MB | Multi-stage build with Alpine |
 | Simulator | 84.6MB | Stripped down to essentials |
 | Frontend | 74.6MB | Nginx on Alpine |
-| Frontend2 | 74.3MB | Nginx on Alpine |
 
-Total: **426MB** (about 45% smaller than using standard Debian images)
+Total: **351MB** (about 50% smaller than using standard Debian images)
 
 ---
 
@@ -322,7 +333,7 @@ INFO:     Application startup complete.
 
 ---
 
-### Step 3: Frontend Setup (API Dashboard)
+### Step 3: Frontend Setup
 
 1. **Navigate to frontend directory**
 ```bash
@@ -339,7 +350,19 @@ const API_BASE_URL = 'http://localhost:8000';
 
 This should already be set correctly, but verify it points to your backend.
 
-3. **Serve the frontend**
+3. **Configure MQTT (for MQTT Dashboard)**
+
+Edit `frontend/js/mqtt-dashboard.js`:
+```javascript
+const MQTT_CONFIG = {
+    BROKER: 'wss://broker.hivemq.com:8884/mqtt',  // WebSocket URL
+    TOPIC_PREFIX: 'sensegrid',
+    DEVICES: ['LR1', 'LR2'],
+    SENSOR_TYPES: ['CT1', 'CT2', 'IR', 'K-Type']
+};
+```
+
+4. **Serve the frontend**
 
 **Option A: Python HTTP Server (Easiest)**
 ```bash
@@ -364,38 +387,7 @@ http-server -p 3000
 
 ---
 
-### Step 4: Frontend2 Setup (MQTT Dashboard)
-
-1. **Navigate to frontend2 directory**
-```bash
-# Open another NEW terminal
-cd frontend2
-```
-
-2. **Configure MQTT broker**
-
-Edit `frontend2/js/mqtt-dashboard.js`:
-```javascript
-const MQTT_CONFIG = {
-    BROKER: 'wss://broker.hivemq.com:8884/mqtt',  // WebSocket URL
-    TOPIC_PREFIX: 'sensegrid',
-    DEVICES: ['LR1', 'LR2'],
-    SENSOR_TYPES: ['CT1', 'CT2', 'IR', 'K-Type']
-};
-```
-
-This should already be configured, but verify the broker URL is correct.
-
-3. **Serve the frontend**
-```bash
-python -m http.server 3001
-```
-
-**Access it:** http://localhost:3001
-
----
-
-### Step 5: Simulator Setup (Required for Testing)
+### Step 4: Simulator Setup (Required for Testing)
 
 **Important:** The simulator is **essential for testing** the dashboard and backend. Without it, you won't see any sensor data flowing through the system.
 
@@ -454,12 +446,11 @@ After completing all steps, you should have these terminals open:
 |----------|---------|-----|--------|
 | 1 | `uvicorn main:app --reload` | http://localhost:8000 | ✅ Required |
 | 2 | `python -m http.server 3000` | http://localhost:3000 | ✅ Required |
-| 3 | `python -m http.server 3001` | http://localhost:3001 | ✅ Required |
-| 4 | `python sensor_simulator.py` | - | ✅ **Required for Testing** |
+| 3 | `python sensor_simulator.py` | - | ✅ **Required for Testing** |
 
 Plus PostgreSQL running (either locally or in Docker).
 
-**Note:** Without the simulator (Terminal 4), the dashboards will show no data!
+**Note:** Without the simulator (Terminal 3), the dashboards will show no data!
 
 ---
 
@@ -572,8 +563,8 @@ AuthFastAPI/
     └── .env.example      # Template for backend .env
 ```
 
-**Note:** Frontend and Frontend2 don't have `.env` files. They use:
-- **Port mapping**: Configured in root `.env` (`FRONTEND_PORT`, `FRONTEND2_PORT`)
+**Note:** Frontend doesn't have a `.env` file. It uses:
+- **Port mapping**: Configured in root `.env` (`FRONTEND_PORT`)
 - **API URL**: Auto-detected in `config.js` (hardcoded logic)
 - **MQTT Broker**: Hardcoded in `mqtt-dashboard.js`
 
@@ -615,8 +606,7 @@ MQTT_TOPIC_PREFIX=sensegrid         # Topic prefix for all messages
 
 # Application Ports
 BACKEND_PORT=8000                   # Backend API port
-FRONTEND_PORT=3000                  # API Dashboard port
-FRONTEND2_PORT=3001                 # MQTT Dashboard port
+FRONTEND_PORT=3000                  # Frontend Dashboard port
 DATABASE_PORT=5432                  # PostgreSQL port
 ```
 
