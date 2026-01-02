@@ -349,6 +349,17 @@
                 const end = new Date(savedEndDate);
                 const displayText = `${start.toLocaleString()} - ${end.toLocaleString()}`;
                 document.getElementById('currentPeriodDisplay').textContent = displayText;
+
+                // Trigger event so devices-app.js knows about the saved range
+                // Use setTimeout to ensure devices-app.js has initialized its listeners
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('dateRangeChanged', {
+                        detail: {
+                            startDate: savedStartDate,
+                            endDate: savedEndDate
+                        }
+                    }));
+                }, 100);
             }
         });
 

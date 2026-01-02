@@ -316,6 +316,8 @@ class DevicesDashboard {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
+        // Trigger immediate update
+        this.updateValues();
         // Start with new interval
         this.startAutoUpdate();
     }
