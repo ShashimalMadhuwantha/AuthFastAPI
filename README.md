@@ -783,8 +783,7 @@ uvicorn main:app --reload
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `BACKEND_PORT` | Backend API port | `8000` |
-| `FRONTEND_PORT` | API Dashboard port | `3000` |
-| `FRONTEND2_PORT` | MQTT Dashboard port | `3001` |
+| `FRONTEND_PORT` | Frontend Dashboard port | `3000` |
 | `DATABASE_PORT` | PostgreSQL port | `5432` |
 
 ---
@@ -890,7 +889,6 @@ MQTT_TOPIC_PREFIX=sensegrid
 
 # Frontend ports
 FRONTEND_PORT=3000
-FRONTEND2_PORT=3001
 ```
 
 To change any setting, just edit the `.env` file and restart:
@@ -967,12 +965,7 @@ AuthFastAPI/
 │   ├── js/
 │   ├── index.html             # Login page
 │   ├── devices-dashboard.html # Main dashboard
-│   └── Dockerfile
-│
-├── frontend2/                  # MQTT Dashboard
-│   ├── css/
-│   ├── js/
-│   ├── index.html
+│   ├── mqtt-dashboard.html    # MQTT Dashboard
 │   └── Dockerfile
 │
 ├── sensor_simulator.py         # Generates fake sensor data
