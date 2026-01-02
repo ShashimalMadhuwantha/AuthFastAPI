@@ -32,8 +32,16 @@ export const DevicesAPI = {
     /**
      * Get sensor statistics
      */
-    async getSensorStats(deviceId, sensorType, hours = 24) {
-        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/stats?hours=${hours}`));
+    async getSensorStats(deviceId, sensorType, hoursOrDateRange = 24) {
+        let url;
+        if (typeof hoursOrDateRange === 'object' && hoursOrDateRange.startDate && hoursOrDateRange.endDate) {
+            // Custom date range
+            url = getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/stats?start_date=${hoursOrDateRange.startDate}&end_date=${hoursOrDateRange.endDate}`);
+        } else {
+            // Hours-based
+            url = getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/stats?hours=${hoursOrDateRange}`);
+        }
+        const response = await fetch(url);
         if (!response.ok) throw new Error(`Failed to fetch stats for ${deviceId}/${sensorType}`);
         return response.json();
     },
@@ -41,8 +49,16 @@ export const DevicesAPI = {
     /**
      * Get sensor time series data
      */
-    async getTimeSeries(deviceId, sensorType, hours = 24) {
-        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/timeseries?hours=${hours}`));
+    async getTimeSeries(deviceId, sensorType, hoursOrDateRange = 24) {
+        let url;
+        if (typeof hoursOrDateRange === 'object' && hoursOrDateRange.startDate && hoursOrDateRange.endDate) {
+            // Custom date range
+            url = getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/timeseries?start_date=${hoursOrDateRange.startDate}&end_date=${hoursOrDateRange.endDate}`);
+        } else {
+            // Hours-based
+            url = getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/timeseries?hours=${hoursOrDateRange}`);
+        }
+        const response = await fetch(url);
         if (!response.ok) throw new Error(`Failed to fetch timeseries for ${deviceId}/${sensorType}`);
         return response.json();
     },
@@ -50,7 +66,7 @@ export const DevicesAPI = {
     /**
      * Get all data for a device (device info + all sensors)
      */
-    async getDeviceData(deviceId, sensorTypes, hours = 24) {
+    async getDeviceData(deviceId, sensorTypes, hoursOrDateRange = 24) {
         try {
             const deviceInfo = await this.getDevice(deviceId);
 
@@ -59,8 +75,8 @@ export const DevicesAPI = {
                     try {
                         const [latest, stats, timeseries] = await Promise.all([
                             this.getLatestReading(deviceId, type),
-                            this.getSensorStats(deviceId, type, hours),
-                            this.getTimeSeries(deviceId, type, hours)
+                            this.getSensorStats(deviceId, type, hoursOrDateRange),
+                            this.getTimeSeries(deviceId, type, hoursOrDateRange)
                         ]);
                         return { type, latest, stats, timeseries };
                     } catch (err) {

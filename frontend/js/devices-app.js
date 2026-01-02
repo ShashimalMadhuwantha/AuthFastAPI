@@ -17,6 +17,7 @@ class DevicesDashboard {
         this.charts = {};
         this.timePeriodHours = parseFloat(localStorage.getItem('timePeriod')) || 24; // Load from localStorage or default 24 hours
         this.refreshIntervalSeconds = parseInt(localStorage.getItem('refreshInterval')) || 5; // Load from localStorage or default 5 seconds
+        this.customDateRange = null; // Will store {startDate, endDate} if custom range is set
     }
 
     /**
@@ -46,11 +47,20 @@ class DevicesDashboard {
             this.restartAutoUpdate();
         });
 
-        // Listen for time period changes from modal
+        // Listen for time period changes from modal (deprecated, keeping for backward compatibility)
         window.addEventListener('timePeriodChanged', async (e) => {
             const newPeriod = e.detail.hours;
             console.log(`📅 Time period changed to ${newPeriod} hours`);
             this.timePeriodHours = newPeriod;
+            this.customDateRange = null; // Clear custom range
+            await this.refreshAllData();
+        });
+
+        // Listen for custom date range changes from modal
+        window.addEventListener('dateRangeChanged', async (e) => {
+            const { startDate, endDate } = e.detail;
+            console.log(`📅 Custom date range set: ${startDate} to ${endDate}`);
+            this.customDateRange = { startDate, endDate };
             await this.refreshAllData();
         });
     }
@@ -96,10 +106,13 @@ class DevicesDashboard {
                 return;
             }
 
+            // Determine time range parameter
+            const timeParam = this.customDateRange || this.timePeriodHours;
+
             // Fetch data for each device
             const devicesData = await Promise.all(
                 devices.map(device =>
-                    DevicesAPI.getDeviceData(device.device_id, CONFIG.SENSOR_TYPES, this.timePeriodHours)
+                    DevicesAPI.getDeviceData(device.device_id, CONFIG.SENSOR_TYPES, timeParam)
                 )
             );
 
@@ -229,6 +242,7 @@ class DevicesDashboard {
 
         try {
             const devices = await DevicesAPI.getAllDevices();
+            const timeParam = this.customDateRange || this.timePeriodHours;
 
             for (const device of devices) {
                 const deviceId = device.device_id;
@@ -247,8 +261,8 @@ class DevicesDashboard {
                     try {
                         const [latest, stats, timeseries] = await Promise.all([
                             DevicesAPI.getLatestReading(deviceId, type),
-                            DevicesAPI.getSensorStats(deviceId, type, this.timePeriodHours),
-                            DevicesAPI.getTimeSeries(deviceId, type, this.timePeriodHours)
+                            DevicesAPI.getSensorStats(deviceId, type, timeParam),
+                            DevicesAPI.getTimeSeries(deviceId, type, timeParam)
                         ]);
 
                         const sensorCard = new SensorCard(deviceId, type, latest, stats);

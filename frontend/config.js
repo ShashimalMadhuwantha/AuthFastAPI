@@ -1,5 +1,8 @@
 // API Configuration
-// This file contains the API endpoint configuration
+// This file contains the API endpoint configuration for auth and user management
+// Used by: index.html, and other non-device pages
+// 
+// Note: Device dashboard uses devices-config.js (separate ES6 module)
 // Automatically detects environment and sets appropriate API URL
 
 const API_CONFIG = {

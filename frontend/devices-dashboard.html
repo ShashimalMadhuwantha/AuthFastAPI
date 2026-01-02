@@ -81,6 +81,10 @@
                 <a href="devices-dashboard.html" class="text-sm text-primary-600 dark:text-primary-400 font-semibold">
                     Devices
                 </a>
+                <a href="mqtt-dashboard.html"
+                    class="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">
+                    MQTT Dashboard
+                </a>
                 <span class="text-sm text-gray-700 dark:text-gray-300">Welcome, <span id="usernameDisplay"
                         class="font-semibold"></span></span>
                 <button onclick="handleLogout()"
@@ -170,24 +174,37 @@
 
                 <!-- History Tab Content -->
                 <div id="historyContent" style="display: none; padding: 24px;">
-                    <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 16px;">Time Period</h3>
-                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Select the time range for
+                    <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 16px;">Custom Time
+                        Range</h3>
+                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Select start and end date/time for
                         historical data</p>
 
-                    <select id="timePeriodSelector" onchange="updateTimePeriod()"
-                        style="width: 100%; padding: 12px; border: 2px solid #047857; border-radius: 8px; font-size: 14px; cursor: pointer; background: white;">
-                        <option value="1">Last 1 hour</option>
-                        <option value="6">Last 6 hours</option>
-                        <option value="12">Last 12 hours</option>
-                        <option value="24" selected>Last 24 hours</option>
-                        <option value="48">Last 2 days</option>
-                        <option value="168">Last 7 days</option>
-                    </select>
+                    <div style="margin-bottom: 16px;">
+                        <label
+                            style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Start
+                            Date & Time</label>
+                        <input type="datetime-local" id="startDateTime"
+                            style="width: 100%; padding: 12px; border: 2px solid #047857; border-radius: 8px; font-size: 14px; background: white;">
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label
+                            style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">End
+                            Date & Time</label>
+                        <input type="datetime-local" id="endDateTime"
+                            style="width: 100%; padding: 12px; border: 2px solid #047857; border-radius: 8px; font-size: 14px; background: white;">
+                    </div>
+
+                    <button onclick="applyCustomDateRange()"
+                        style="width: 100%; padding: 12px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;"
+                        onmouseover="this.style.background='#065f46'" onmouseout="this.style.background='#047857'">
+                        Apply Date Range
+                    </button>
 
                     <div
                         style="margin-top: 20px; padding: 12px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #047857;">
                         <p style="font-size: 13px; color: #047857; margin: 0;">
-                            <strong>Current:</strong> <span id="currentPeriodDisplay">Last 24 hours</span>
+                            <strong>Current Range:</strong> <span id="currentPeriodDisplay">Last 24 hours</span>
                         </p>
                     </div>
                 </div>
@@ -261,18 +278,40 @@
             console.log('Refresh interval updated to:', interval, 'seconds');
         }
 
-        function updateTimePeriod() {
-            const period = document.getElementById('timePeriodSelector').value;
-            const displayText = document.getElementById('timePeriodSelector').options[document.getElementById('timePeriodSelector').selectedIndex].text;
-            document.getElementById('currentPeriodDisplay').textContent = displayText;
+        function applyCustomDateRange() {
+            const startDate = document.getElementById('startDateTime').value;
+            const endDate = document.getElementById('endDateTime').value;
+
+            if (!startDate || !endDate) {
+                alert('Please select both start and end date/time');
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (start >= end) {
+                alert('Start date must be before end date');
+                return;
+            }
 
             // Store in localStorage
-            localStorage.setItem('timePeriod', period);
+            localStorage.setItem('customStartDate', startDate);
+            localStorage.setItem('customEndDate', endDate);
+
+            // Update display
+            const displayText = `${start.toLocaleString()} - ${end.toLocaleString()}`;
+            document.getElementById('currentPeriodDisplay').textContent = displayText;
 
             // Trigger event for devices-app.js to update
-            window.dispatchEvent(new CustomEvent('timePeriodChanged', { detail: { hours: parseFloat(period) } }));
+            window.dispatchEvent(new CustomEvent('dateRangeChanged', {
+                detail: {
+                    startDate: startDate,
+                    endDate: endDate
+                }
+            }));
 
-            console.log('Time period updated to:', period, 'hours');
+            console.log('Date range updated:', startDate, 'to', endDate);
         }
 
         // Close modal when clicking outside
@@ -286,7 +325,8 @@
         // Load saved settings on page load
         window.addEventListener('DOMContentLoaded', function () {
             const savedRefresh = localStorage.getItem('refreshInterval');
-            const savedPeriod = localStorage.getItem('timePeriod');
+            const savedStartDate = localStorage.getItem('customStartDate');
+            const savedEndDate = localStorage.getItem('customEndDate');
 
             if (savedRefresh) {
                 document.getElementById('refreshInterval').value = savedRefresh;
@@ -294,9 +334,20 @@
                 document.getElementById('currentRefreshDisplay').textContent = displayText;
             }
 
-            if (savedPeriod) {
-                document.getElementById('timePeriodSelector').value = savedPeriod;
-                const displayText = document.getElementById('timePeriodSelector').options[document.getElementById('timePeriodSelector').selectedIndex].text;
+            // Set default dates (last 24 hours)
+            const now = new Date();
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+            const defaultStart = savedStartDate || yesterday.toISOString().slice(0, 16);
+            const defaultEnd = savedEndDate || now.toISOString().slice(0, 16);
+
+            document.getElementById('startDateTime').value = defaultStart;
+            document.getElementById('endDateTime').value = defaultEnd;
+
+            if (savedStartDate && savedEndDate) {
+                const start = new Date(savedStartDate);
+                const end = new Date(savedEndDate);
+                const displayText = `${start.toLocaleString()} - ${end.toLocaleString()}`;
                 document.getElementById('currentPeriodDisplay').textContent = displayText;
             }
         });
