@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Devices Dashboard - SenseGrid</title>
+    <meta name="description" content="Real-time IoT device monitoring via MQTT">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+
+    <!-- MQTT.js -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+    <link rel="stylesheet" href="css/mqtt-devices.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .connection-status.connected {
+            background: #4caf50;
+            color: white;
+        }
+
+        .connection-status.disconnected {
+            background: #f44336;
+            color: white;
+        }
+
+        .connection-status.connecting {
+            background: #ff9800;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="connection-status connecting">Connecting to MQTT...</div>
+
+    <!-- Navigation -->
+    <nav style="background: white; border-bottom: 1px solid #e5e7eb; margin-bottom: 0;">
+        <div
+            style="max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 16px;">
+            <a href="dashboard.html" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+                <img src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg" style="height: 32px;"
+                    alt="SenseGrid Logo">
+                <span style="font-size: 24px; font-weight: 600; color: #111827;">SenseGrid</span>
+            </a>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <a href="dashboard.html"
+                    style="font-size: 14px; color: #374151; text-decoration: none; font-weight: 500; transition: color 0.2s;"
+                    onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#374151'">
+                    Dashboard
+                </a>
+                <a href="users-dashboard.html"
+                    style="font-size: 14px; color: #374151; text-decoration: none; font-weight: 500; transition: color 0.2s;"
+                    onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#374151'">
+                    Manage Users
+                </a>
+                <a href="devices-dashboard.html"
+                    style="font-size: 14px; color: #374151; text-decoration: none; font-weight: 500; transition: color 0.2s;"
+                    onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#374151'">
+                    Devices
+                </a>
+                <a href="mqtt-dashboard.html"
+                    style="font-size: 14px; color: #2563eb; text-decoration: none; font-weight: 600;">
+                    MQTT Dashboard
+                </a>
+                <span style="font-size: 14px; color: #374151;">Welcome, <span id="usernameDisplay"
+                        style="font-weight: 600;"></span></span>
+                <button onclick="handleLogout()"
+                    style="background: #dc2626; color: white; padding: 8px 16px; border-radius: 8px; border: none; font-weight: 500; font-size: 14px; cursor: pointer; transition: background 0.2s;"
+                    onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <div class="header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 40px;">
+        <div>
+            <h1>🌐 MQTT Devices Dashboard</h1>
+            <p>Real-time monitoring via MQTT Broker</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <!-- Settings Icon -->
+            <button id="settingsBtn" onclick="openSettingsModal()"
+                style="background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;"
+                onmouseover="this.style.background='rgba(255,255,255,0.3)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6m8.66-10.5l-5.2 3M8.54 14l-5.2 3m13.32 0l-5.2-3M8.54 10l-5.2-3"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div
+            style="background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <!-- Modal Header -->
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e5e7eb;">
+                <h2 style="font-size: 20px; font-weight: 600; color: #111827;">Settings</h2>
+                <button onclick="closeSettingsModal()"
+                    style="background: none; border: none; cursor: pointer; font-size: 24px; color: #6b7280; line-height: 1;">
+                    ×
+                </button>
+            </div>
+
+            <!-- Tabs -->
+            <div style="display: flex; border-bottom: 1px solid #e5e7eb;">
+                <button id="realtimeTab" onclick="switchTab('realtime')"
+                    style="flex: 1; padding: 16px; background: #047857; color: white; border: none; cursor: pointer; font-weight: 500; border-radius: 0;">
+                    Realtime
+                </button>
+                <button id="historyTab" onclick="switchTab('history')"
+                    style="flex: 1; padding: 16px; background: #e5e7eb; color: #6b7280; border: none; cursor: pointer; font-weight: 500; border-radius: 0;">
+                    History
+                </button>
+            </div>
+
+            <!-- Realtime Tab Content -->
+            <div id="realtimeContent" style="padding: 24px;">
+                <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 16px;">MQTT Update Rate
+                </h3>
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Data updates in real-time via MQTT (no
+                    manual refresh needed)</p>
+
+                <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #047857;">
+                    <p style="font-size: 14px; color: #047857; margin: 0; line-height: 1.6;">
+                        <strong>ℹ️ Real-time Mode</strong><br>
+                        This dashboard receives live data from MQTT broker. Updates happen automatically when sensors
+                        publish new data.
+                    </p>
+                </div>
+            </div>
+
+            <!-- History Tab Content -->
+            <div id="historyContent" style="display: none; padding: 24px;">
+                <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 16px;">Custom Time Range
+                </h3>
+                <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Select start and end date/time for
+                    chart display</p>
+
+                <div style="margin-bottom: 16px;">
+                    <label
+                        style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Start
+                        Date & Time</label>
+                    <input type="datetime-local" id="startDateTime"
+                        style="width: 100%; padding: 12px; border: 2px solid #047857; border-radius: 8px; font-size: 14px; background: white;">
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label
+                        style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">End
+                        Date & Time</label>
+                    <input type="datetime-local" id="endDateTime"
+                        style="width: 100%; padding: 12px; border: 2px solid #047857; border-radius: 8px; font-size: 14px; background: white;">
+                </div>
+
+                <button onclick="applyCustomDateRange()"
+                    style="width: 100%; padding: 12px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s;"
+                    onmouseover="this.style.background='#065f46'" onmouseout="this.style.background='#047857'">
+                    Apply Date Range
+                </button>
+
+                <div
+                    style="margin-top: 20px; padding: 12px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #047857;">
+                    <p style="font-size: 13px; color: #047857; margin: 0;">
+                        <strong>Current Range:</strong> <span id="currentPeriodDisplay">Last 1 hour</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+                style="padding: 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="closeSettingsModal()"
+                    style="padding: 10px 20px; background: #047857; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Devices Container -->
+    <div id="devices-container" class="devices-container">
+        <div class="text-center py-8">
+            <p style="text-align: center; padding: 60px; color: #999;">Waiting for MQTT data...</p>
+        </div>
+    </div>
+
+    <script>
+        // Settings Modal Functions
+        function openSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function switchTab(tab) {
+            const realtimeTab = document.getElementById('realtimeTab');
+            const historyTab = document.getElementById('historyTab');
+            const realtimeContent = document.getElementById('realtimeContent');
+            const historyContent = document.getElementById('historyContent');
+
+            if (tab === 'realtime') {
+                realtimeTab.style.background = '#047857';
+                realtimeTab.style.color = 'white';
+                historyTab.style.background = '#e5e7eb';
+                historyTab.style.color = '#6b7280';
+                realtimeContent.style.display = 'block';
+                historyContent.style.display = 'none';
+            } else {
+                historyTab.style.background = '#047857';
+                historyTab.style.color = 'white';
+                realtimeTab.style.background = '#e5e7eb';
+                realtimeTab.style.color = '#6b7280';
+                historyContent.style.display = 'block';
+                realtimeContent.style.display = 'none';
+            }
+        }
+
+        function applyCustomDateRange() {
+            const startDate = document.getElementById('startDateTime').value;
+            const endDate = document.getElementById('endDateTime').value;
+
+            if (!startDate || !endDate) {
+                alert('Please select both start and end date/time');
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (start >= end) {
+                alert('Start date must be before end date');
+                return;
+            }
+
+            // Store in localStorage
+            localStorage.setItem('customStartDateMQTT', startDate);
+            localStorage.setItem('customEndDateMQTT', endDate);
+
+            // Update display
+            const displayText = `${start.toLocaleString()} - ${end.toLocaleString()}`;
+            document.getElementById('currentPeriodDisplay').textContent = displayText;
+
+            // Trigger event for mqtt-dashboard.js to update
+            window.dispatchEvent(new CustomEvent('dateRangeChanged', {
+                detail: {
+                    startDate: startDate,
+                    endDate: endDate
+                }
+            }));
+
+            console.log('Date range updated:', startDate, 'to', endDate);
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function (event) {
+            const modal = document.getElementById('settingsModal');
+            if (event.target === modal) {
+                closeSettingsModal();
+            }
+        });
+
+        // Load saved settings on page load
+        window.addEventListener('DOMContentLoaded', function () {
+            const savedStartDate = localStorage.getItem('customStartDateMQTT');
+            const savedEndDate = localStorage.getItem('customEndDateMQTT');
+
+            // Set default dates (last 1 hour)
+            const now = new Date();
+            const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+            const defaultStart = savedStartDate || oneHourAgo.toISOString().slice(0, 16);
+            const defaultEnd = savedEndDate || now.toISOString().slice(0, 16);
+
+            document.getElementById('startDateTime').value = defaultStart;
+            document.getElementById('endDateTime').value = defaultEnd;
+
+            if (savedStartDate && savedEndDate) {
+                const start = new Date(savedStartDate);
+                const end = new Date(savedEndDate);
+                const displayText = `${start.toLocaleString()} - ${end.toLocaleString()}`;
+                document.getElementById('currentPeriodDisplay').textContent = displayText;
+            }
+        });
+
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+            const username = localStorage.getItem('username') || sessionStorage.getItem('username');
+
+            if (!token || !username) {
+                window.location.href = 'index.html';
+                return null;
+            }
+
+            document.getElementById('usernameDisplay').textContent = username;
+            return { token, username };
+        }
+
+        // Handle logout
+        function handleLogout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('username');
+            sessionStorage.removeItem('access_token');
+            sessionStorage.removeItem('username');
+            window.location.href = 'index.html';
+        }
+
+        // Initialize authentication
+        checkAuth();
+    </script>
+
+    <script type="module" src="js/mqtt-dashboard.js"></script>
+</body>
+
+</html>

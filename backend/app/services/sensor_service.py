@@ -154,3 +154,109 @@ class SensorService:
             unit=readings[0].unit if readings else None,
             data=data_points
         )
+    
+    @staticmethod
+    def get_sensor_stats_by_date_range(
+        db: Session, 
+        device_id: str, 
+        sensor_type: str, 
+        start_date: str,
+        end_date: str
+    ) -> SensorStats:
+        """Get min, max, avg statistics for a sensor over a custom date range"""
+        device = db.query(Device).filter(Device.device_id == device_id).first()
+        if not device:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Device {device_id} not found"
+            )
+        
+        try:
+            start_time = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            end_time = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date format: {str(e)}"
+            )
+        
+        stats = db.query(
+            func.min(SensorReading.value).label('min_value'),
+            func.max(SensorReading.value).label('max_value'),
+            func.avg(SensorReading.value).label('avg_value'),
+            func.count(SensorReading.id).label('count')
+        ).filter(
+            and_(
+                SensorReading.device_id == device.id,
+                SensorReading.sensor_type == sensor_type,
+                SensorReading.timestamp >= start_time,
+                SensorReading.timestamp <= end_time
+            )
+        ).first()
+        
+        if stats.count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No readings found for {sensor_type} between {start_date} and {end_date}"
+            )
+        
+        return SensorStats(
+            sensor_type=sensor_type,
+            min_value=stats.min_value,
+            max_value=stats.max_value,
+            avg_value=stats.avg_value,
+            count=stats.count,
+            start_time=start_time,
+            end_time=end_time
+        )
+    
+    @staticmethod
+    def get_time_series_by_date_range(
+        db: Session, 
+        device_id: str, 
+        sensor_type: str, 
+        start_date: str,
+        end_date: str
+    ) -> TimeSeriesResponse:
+        """Get time series data for graphing over a custom date range"""
+        device = db.query(Device).filter(Device.device_id == device_id).first()
+        if not device:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Device {device_id} not found"
+            )
+        
+        try:
+            start_time = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            end_time = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date format: {str(e)}"
+            )
+        
+        readings = db.query(SensorReading).filter(
+            and_(
+                SensorReading.device_id == device.id,
+                SensorReading.sensor_type == sensor_type,
+                SensorReading.timestamp >= start_time,
+                SensorReading.timestamp <= end_time
+            )
+        ).order_by(SensorReading.timestamp.asc()).all()
+        
+        if not readings:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No readings found for {sensor_type} between {start_date} and {end_date}"
+            )
+        
+        data_points = [
+            TimeSeriesPoint(timestamp=reading.timestamp, value=reading.value)
+            for reading in readings
+        ]
+        
+        return TimeSeriesResponse(
+            sensor_type=sensor_type,
+            unit=readings[0].unit if readings else None,
+            data=data_points
+        )
