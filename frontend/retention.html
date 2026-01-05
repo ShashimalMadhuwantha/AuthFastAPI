@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Retention - SenseGrid</title>
+    <meta name="description" content="Manage data retention and cleanup old sensor data">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { "50": "#eff6ff", "100": "#dbeafe", "200": "#bfdbfe", "300": "#93c5fd", "400": "#60a5fa", "500": "#3b82f6", "600": "#2563eb", "700": "#1d4ed8", "800": "#1e40af", "900": "#1e3a8a", "950": "#172554" }
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 antialiased">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+            <a href="dashboard.html" class="flex items-center space-x-3">
+                <img src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg" class="h-8"
+                    alt="SenseGrid Logo">
+                <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">SenseGrid</span>
+            </a>
+            <div class="flex items-center space-x-4">
+                <a href="dashboard.html"
+                    class="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">
+                    Dashboard
+                </a>
+                <a href="users-dashboard.html"
+                    class="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">
+                    Users
+                </a>
+                <a href="devices-dashboard.html"
+                    class="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">
+                    Devices
+                </a>
+                <a href="mqtt-dashboard.html"
+                    class="text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors">
+                    MQTT Dashboard
+                </a>
+                <a href="retention.html" class="text-sm text-primary-600 dark:text-primary-400 font-semibold">
+                    Retention
+                </a>
+                <span class="text-sm text-gray-700 dark:text-gray-300">Welcome, <span id="usernameDisplay"
+                        class="font-semibold"></span></span>
+                <button onclick="handleLogout()"
+                    class="text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-screen-xl mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 mb-8 fade-in">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">📊 Data Retention</h1>
+            <p class="text-gray-600 dark:text-gray-400 text-lg">Manage database statistics and cleanup old sensor data
+            </p>
+        </div>
+
+        <!-- Warning -->
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 mb-8 fade-in">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700 dark:text-yellow-200">
+                        <strong>Warning:</strong> Data deletion is permanent and cannot be undone. Always backup your
+                        database before cleanup!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 mb-8 fade-in">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Database Statistics</h2>
+                <button onclick="loadStats()" id="refreshBtn"
+                    class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                    Refresh Stats
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                    <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Total Readings</div>
+                    <div class="text-3xl font-bold text-gray-900 dark:text-white" id="totalReadings">-</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                    <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Data Age (days)</div>
+                    <div class="text-3xl font-bold text-gray-900 dark:text-white" id="dataAge">-</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                    <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Oldest Record</div>
+                    <div class="text-lg font-semibold text-gray-900 dark:text-white" id="oldestDate">-</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                    <div class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Newest Record</div>
+                    <div class="text-lg font-semibold text-gray-900 dark:text-white" id="newestDate">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cleanup Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 fade-in">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Cleanup Old Data</h2>
+
+            <div class="mb-6">
+                <label for="daysInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Delete data older than (days):
+                </label>
+                <input type="number" id="daysInput" value="30" min="1" max="365"
+                    class="w-full max-w-xs px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+            </div>
+
+            <button onclick="runCleanup()" id="cleanupBtn"
+                class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                Delete Old Data
+            </button>
+
+            <div id="cleanupResult" class="mt-6 hidden"></div>
+        </div>
+    </main>
+
+    <script src="config.js"></script>
+    <script>
+        // Check authentication
+        function checkAuth() {
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+            const username = localStorage.getItem('username') || sessionStorage.getItem('username');
+
+            if (!token || !username) {
+                window.location.href = 'index.html';
+                return null;
+            }
+
+            document.getElementById('usernameDisplay').textContent = username;
+            return { token, username };
+        }
+
+        // Handle logout
+        function handleLogout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('username');
+            sessionStorage.removeItem('access_token');
+            sessionStorage.removeItem('username');
+            window.location.href = 'index.html';
+        }
+
+        // Run auth check
+        checkAuth();
+
+        async function loadStats() {
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            btn.textContent = 'Loading...';
+
+            try {
+                const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+                const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/retention/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    throw new Error('Failed to load statistics');
+                }
+
+                const data = await response.json();
+
+                document.getElementById('totalReadings').textContent =
+                    data.total_readings.toLocaleString();
+                document.getElementById('dataAge').textContent = data.data_age_days;
+
+                if (data.oldest_date) {
+                    const oldest = new Date(data.oldest_date);
+                    document.getElementById('oldestDate').textContent =
+                        oldest.toLocaleDateString();
+                }
+
+                if (data.newest_date) {
+                    const newest = new Date(data.newest_date);
+                    document.getElementById('newestDate').textContent =
+                        newest.toLocaleDateString();
+                }
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Refresh Stats';
+            }
+        }
+
+        async function runCleanup() {
+            const days = document.getElementById('daysInput').value;
+            const btn = document.getElementById('cleanupBtn');
+            const resultDiv = document.getElementById('cleanupResult');
+
+            // Confirm action
+            if (!confirm(`Are you sure you want to delete all data older than ${days} days? This cannot be undone!`)) {
+                return;
+            }
+
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Deleting...';
+            resultDiv.classList.add('hidden');
+
+            try {
+                const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+                const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/retention/cleanup?days=${days}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+                    throw new Error('Cleanup failed');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'mt-6 p-4 bg-green-50 dark:bg-green-900/20 border-l-4 border-green-400 rounded';
+                    resultDiv.innerHTML = `
+                        <p class="text-sm text-green-700 dark:text-green-200">
+                            <strong>Success:</strong> ${data.message}
+                        </p>
+                    `;
+
+                    // Refresh stats
+                    setTimeout(loadStats, 500);
+                } else {
+                    throw new Error(data.message || 'Cleanup failed');
+                }
+
+            } catch (error) {
+                resultDiv.className = 'mt-6 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 rounded';
+                resultDiv.innerHTML = `
+                    <p class="text-sm text-red-700 dark:text-red-200">
+                        <strong>Error:</strong> ${error.message}
+                    </p>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Delete Old Data';
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        // Load statistics automatically on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadStats);
+        } else {
+            // DOM already loaded
+            loadStats();
+        }
+    </script>
+</body>
+
+</html>
