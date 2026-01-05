@@ -1,13 +1,30 @@
 // API wrapper for device endpoints
 import { API_CONFIG, getApiUrl } from './devices-config.js';
 
+// Helper to get auth headers
+function getAuthHeaders() {
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+    return {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    };
+}
+
 export const DevicesAPI = {
     /**
      * Get all devices
      */
     async getAllDevices() {
-        const response = await fetch(getApiUrl('/api/v1/devices/'));
-        if (!response.ok) throw new Error('Failed to fetch devices');
+        const response = await fetch(getApiUrl('/api/v1/devices/'), {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = 'index.html';
+                return;
+            }
+            throw new Error('Failed to fetch devices');
+        }
         return response.json();
     },
 
@@ -15,8 +32,16 @@ export const DevicesAPI = {
      * Get specific device
      */
     async getDevice(deviceId) {
-        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}`));
-        if (!response.ok) throw new Error(`Failed to fetch device ${deviceId}`);
+        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}`), {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = 'index.html';
+                return;
+            }
+            throw new Error(`Failed to fetch device ${deviceId}`);
+        }
         return response.json();
     },
 
@@ -24,8 +49,16 @@ export const DevicesAPI = {
      * Get latest sensor reading
      */
     async getLatestReading(deviceId, sensorType) {
-        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/latest`));
-        if (!response.ok) throw new Error(`Failed to fetch latest reading for ${deviceId}/${sensorType}`);
+        const response = await fetch(getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/latest`), {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = 'index.html';
+                return;
+            }
+            throw new Error(`Failed to fetch latest reading for ${deviceId}/${sensorType}`);
+        }
         return response.json();
     },
 
@@ -41,8 +74,16 @@ export const DevicesAPI = {
             // Hours-based
             url = getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/stats?hours=${hoursOrDateRange}`);
         }
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to fetch stats for ${deviceId}/${sensorType}`);
+        const response = await fetch(url, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = 'index.html';
+                return;
+            }
+            throw new Error(`Failed to fetch stats for ${deviceId}/${sensorType}`);
+        }
         return response.json();
     },
 
@@ -58,8 +99,16 @@ export const DevicesAPI = {
             // Hours-based
             url = getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/timeseries?hours=${hoursOrDateRange}`);
         }
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to fetch timeseries for ${deviceId}/${sensorType}`);
+        const response = await fetch(url, {
+            headers: getAuthHeaders()
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = 'index.html';
+                return;
+            }
+            throw new Error(`Failed to fetch timeseries for ${deviceId}/${sensorType}`);
+        }
         return response.json();
     },
 
