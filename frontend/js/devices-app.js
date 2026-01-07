@@ -76,6 +76,7 @@ class DevicesDashboard {
 
             selector.addEventListener('change', async (e) => {
                 this.timePeriodHours = parseFloat(e.target.value);
+                this.customDateRange = null; // Clear custom range to resume real-time updates
                 console.log(`⏱️ Time period changed to ${this.timePeriodHours} hours`);
                 await this.refreshAllData();
             });
@@ -252,6 +253,19 @@ class DevicesDashboard {
      * Update all values without page refresh (optimized - only fetches latest values)
      */
     async updateValues() {
+        // Skip updates if viewing historical data (custom date range that ends before today)
+        if (this.customDateRange) {
+            const endDate = new Date(this.customDateRange.endDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Start of today
+
+            // Only skip if end date is before today
+            if (endDate < today) {
+                console.log('⏸️ Skipping updates - viewing historical data (before today)');
+                return;
+            }
+        }
+
         console.log('🔄 Updating values...');
 
         try {
@@ -319,6 +333,19 @@ class DevicesDashboard {
         if (!chart) return;
 
         const newTimestamp = new Date(timestamp);
+
+        // If viewing custom date range, only add points within that range
+        if (this.customDateRange) {
+            const startDate = new Date(this.customDateRange.startDate);
+            const endDate = new Date(this.customDateRange.endDate);
+            endDate.setHours(23, 59, 59, 999); // End of the end date
+
+            // Skip if timestamp is outside the selected range
+            if (newTimestamp < startDate || newTimestamp > endDate) {
+                console.log(`⏭️ Skipping data point outside range: ${timestamp}`);
+                return;
+            }
+        }
 
         // Add new data point
         chart.data.labels.push(newTimestamp);
