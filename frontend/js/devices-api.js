@@ -90,11 +90,15 @@ export const DevicesAPI = {
     /**
      * Get sensor time series data
      */
-    async getTimeSeries(deviceId, sensorType, hoursOrDateRange = 24) {
+    async getTimeSeries(deviceId, sensorType, hoursOrDateRange = 24, quotaLimit = null) {
         let url;
         if (typeof hoursOrDateRange === 'object' && hoursOrDateRange.startDate && hoursOrDateRange.endDate) {
             // Custom date range
             url = getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/timeseries?start_date=${hoursOrDateRange.startDate}&end_date=${hoursOrDateRange.endDate}`);
+            // Add quota limit if specified
+            if (quotaLimit) {
+                url += `&quota_limit=${quotaLimit}`;
+            }
         } else {
             // Hours-based
             url = getApiUrl(`/api/v1/devices/${deviceId}/sensors/${sensorType}/timeseries?hours=${hoursOrDateRange}`);

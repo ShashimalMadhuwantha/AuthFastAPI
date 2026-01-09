@@ -148,6 +148,10 @@
                         style="flex: 1; padding: 16px; background: #e5e7eb; color: #6b7280; border: none; cursor: pointer; font-weight: 500; border-radius: 0;">
                         History
                     </button>
+                    <button id="quotaTab" onclick="switchTab('quota')"
+                        style="flex: 1; padding: 16px; background: #e5e7eb; color: #6b7280; border: none; cursor: pointer; font-weight: 500; border-radius: 0;">
+                        Quota
+                    </button>
                 </div>
 
                 <!-- Realtime Tab Content -->
@@ -213,6 +217,75 @@
                     </div>
                 </div>
 
+                <!-- Quota Tab Content -->
+                <div id="quotaContent" style="display: none; padding: 24px;">
+                    <h3 style="font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 16px;">Data Quota
+                        Management</h3>
+                    <p style="font-size: 14px; color: #6b7280; margin-bottom: 20px;">Set maximum data points to store
+                        (DPM - Data Points per Month)</p>
+
+                    <div style="margin-bottom: 20px;">
+                        <label
+                            style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Quota
+                            Limit (DPM)</label>
+                        <input type="number" id="quotaLimit" value="25000" min="1000" step="1000"
+                            style="width: 100%; padding: 12px; border: 2px solid #047857; border-radius: 8px; font-size: 14px; background: white;">
+                        <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">Default: 25,000 data points</p>
+                    </div>
+
+                    <button onclick="updateQuotaLimit()"
+                        style="width: 100%; padding: 12px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.2s; margin-bottom: 20px;"
+                        onmouseover="this.style.background='#065f46'" onmouseout="this.style.background='#047857'">
+                        Update Quota Limit
+                    </button>
+
+                    <!-- Quota Statistics -->
+                    <div id="quotaStats"
+                        style="background: #f9fafb; border-radius: 8px; padding: 16px; border: 1px solid #e5e7eb;">
+                        <h4 style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 12px;">Current
+                            Usage</h4>
+                        <div style="margin-bottom: 8px;">
+                            <div
+                                style="display: flex; justify-content: space-between; font-size: 13px; color: #6b7280; margin-bottom: 4px;">
+                                <span>Data Points:</span>
+                                <span id="quotaCurrentPoints"
+                                    style="font-weight: 600; color: #111827;">Loading...</span>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; font-size: 13px; color: #6b7280; margin-bottom: 4px;">
+                                <span>Quota Limit:</span>
+                                <span id="quotaLimitDisplay" style="font-weight: 600; color: #111827;">25,000</span>
+                            </div>
+                            <div
+                                style="display: flex; justify-content: space-between; font-size: 13px; color: #6b7280; margin-bottom: 4px;">
+                                <span>Usage:</span>
+                                <span id="quotaUsagePercent" style="font-weight: 600; color: #111827;">0%</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div
+                            style="width: 100%; height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-top: 12px;">
+                            <div id="quotaProgressBar"
+                                style="height: 100%; background: #047857; width: 0%; transition: width 0.3s;"></div>
+                        </div>
+
+                        <!-- Warning if exceeded -->
+                        <div id="quotaWarning"
+                            style="display: none; margin-top: 12px; padding: 12px; background: #fef2f2; border-radius: 8px; border-left: 4px solid #ef4444;">
+                            <p style="font-size: 13px; color: #ef4444; margin: 0;">
+                                <strong>⚠️ Quota Exceeded!</strong><br>
+                                <span id="quotaWarningMessage">Oldest data will be deleted automatically.</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <button onclick="refreshQuotaStatsWithRange()"
+                        style="width: 100%; padding: 10px; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; margin-top: 12px;">
+                        🔄 Refresh Statistics
+                    </button>
+                </div>
+
                 <!-- Modal Footer -->
                 <div
                     style="padding: 20px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px;">
@@ -235,6 +308,8 @@
     </main>
 
     <script src="config.js"></script>
+    <script src="js/custom-modal.js"></script>
+    <script src="js/quota-manager.js"></script>
     <script>
         // Settings Modal Functions
         function openSettingsModal() {
@@ -248,23 +323,74 @@
         function switchTab(tab) {
             const realtimeTab = document.getElementById('realtimeTab');
             const historyTab = document.getElementById('historyTab');
+            const quotaTab = document.getElementById('quotaTab');
             const realtimeContent = document.getElementById('realtimeContent');
             const historyContent = document.getElementById('historyContent');
+            const quotaContent = document.getElementById('quotaContent');
 
+            // Reset all tabs
+            realtimeTab.style.background = '#e5e7eb';
+            realtimeTab.style.color = '#6b7280';
+            historyTab.style.background = '#e5e7eb';
+            historyTab.style.color = '#6b7280';
+            quotaTab.style.background = '#e5e7eb';
+            quotaTab.style.color = '#6b7280';
+            realtimeContent.style.display = 'none';
+            historyContent.style.display = 'none';
+            quotaContent.style.display = 'none';
+
+            // Activate selected tab
             if (tab === 'realtime') {
                 realtimeTab.style.background = '#047857';
                 realtimeTab.style.color = 'white';
-                historyTab.style.background = '#e5e7eb';
-                historyTab.style.color = '#6b7280';
                 realtimeContent.style.display = 'block';
-                historyContent.style.display = 'none';
-            } else {
+            } else if (tab === 'history') {
                 historyTab.style.background = '#047857';
                 historyTab.style.color = 'white';
-                realtimeTab.style.background = '#e5e7eb';
-                realtimeTab.style.color = '#6b7280';
                 historyContent.style.display = 'block';
-                realtimeContent.style.display = 'none';
+            } else if (tab === 'quota') {
+                quotaTab.style.background = '#047857';
+                quotaTab.style.color = 'white';
+                quotaContent.style.display = 'block';
+                // Load quota stats when tab opens
+                if (window.quotaManager) {
+                    // Get current date range from localStorage
+                    const customStartDate = localStorage.getItem('customStartDate');
+                    const customEndDate = localStorage.getItem('customEndDate');
+
+                    if (customStartDate && customEndDate) {
+                        // Convert to ISO format for API
+                        const start = new Date(customStartDate);
+                        const end = new Date(customEndDate);
+                        const startISO = start.toISOString().slice(0, 19);
+                        const endISO = end.toISOString().slice(0, 19);
+
+                        console.log(`📊 Loading quota stats for date range: ${startISO} to ${endISO}`);
+                        window.quotaManager.refreshQuotaStats(startISO, endISO);
+                    } else {
+                        // No custom date range, show all data
+                        console.log('📊 Loading quota stats for all data');
+                        window.quotaManager.refreshQuotaStats();
+                    }
+                }
+            }
+        }
+
+        // Wrapper function to refresh quota stats with current date range
+        function refreshQuotaStatsWithRange() {
+            if (!window.quotaManager) return;
+
+            const customStartDate = localStorage.getItem('customStartDate');
+            const customEndDate = localStorage.getItem('customEndDate');
+
+            if (customStartDate && customEndDate) {
+                const start = new Date(customStartDate);
+                const end = new Date(customEndDate);
+                const startISO = start.toISOString().slice(0, 19);
+                const endISO = end.toISOString().slice(0, 19);
+                window.quotaManager.refreshQuotaStats(startISO, endISO);
+            } else {
+                window.quotaManager.refreshQuotaStats();
             }
         }
 
@@ -283,7 +409,7 @@
         }
 
 
-        function applyCustomDateRange() {
+        async function applyCustomDateRange() {
             const startDate = document.getElementById('startDateTime').value;
             const endDate = document.getElementById('endDateTime').value;
 
@@ -303,6 +429,14 @@
             // Convert to ISO format for API (YYYY-MM-DDTHH:mm:ss)
             const startISO = start.toISOString().slice(0, 19);
             const endISO = end.toISOString().slice(0, 19);
+
+            // Check quota before applying date range
+            if (window.quotaManager) {
+                const canProceed = await window.quotaManager.checkDateRangeQuota(startISO, endISO);
+                if (!canProceed) {
+                    return; // User cancelled or quota exceeded
+                }
+            }
 
             // Store in localStorage (keep original format for input fields)
             localStorage.setItem('customStartDate', startDate);

@@ -130,13 +130,14 @@ async def get_sensor_timeseries(
     hours: Optional[int] = Query(None, description="Time period in hours"),
     start_date: Optional[str] = Query(None, description="Start date (ISO format)"),
     end_date: Optional[str] = Query(None, description="End date (ISO format)"),
+    quota_limit: Optional[int] = Query(None, description="Maximum data points to return (quota limit)"),
     db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user)
 ):
-    """Get time series data for graphing"""
+    """Get time series data for graphing with optional quota limiting"""
     if start_date and end_date:
-        logger.info(f"[API] Get timeseries for {device_id}/{sensor_type} from {start_date} to {end_date} by {current_user}")
-        timeseries = SensorService.get_time_series_by_date_range(db, device_id, sensor_type, start_date, end_date)
+        logger.info(f"[API] Get timeseries for {device_id}/{sensor_type} from {start_date} to {end_date} (quota: {quota_limit}) by {current_user}")
+        timeseries = SensorService.get_time_series_by_date_range(db, device_id, sensor_type, start_date, end_date, quota_limit)
     else:
         hours = hours or 24  # Default to 24 hours if not specified
         logger.info(f"[API] Get timeseries for {device_id}/{sensor_type} (last {hours} hours) by {current_user}")

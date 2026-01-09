@@ -216,9 +216,10 @@ class SensorService:
         device_id: str, 
         sensor_type: str, 
         start_date: str,
-        end_date: str
+        end_date: str,
+        quota_limit: Optional[int] = None
     ) -> TimeSeriesResponse:
-        """Get time series data for graphing over a custom date range"""
+        """Get time series data for graphing over a custom date range with optional quota limiting"""
         device = db.query(Device).filter(Device.device_id == device_id).first()
         if not device:
             raise HTTPException(
@@ -235,14 +236,30 @@ class SensorService:
                 detail=f"Invalid date format: {str(e)}"
             )
         
-        readings = db.query(SensorReading).filter(
+        # Build query
+        query = db.query(SensorReading).filter(
             and_(
                 SensorReading.device_id == device.id,
                 SensorReading.sensor_type == sensor_type,
                 SensorReading.timestamp >= start_time,
                 SensorReading.timestamp <= end_time
             )
-        ).order_by(SensorReading.timestamp.asc()).all()
+        ).order_by(SensorReading.timestamp.desc())  # Get newest first
+        
+        # Apply quota limit if specified
+        if quota_limit:
+            # Count total readings in range
+            total_count = query.count()
+            
+            if total_count > quota_limit:
+                # Limit to quota and get most recent data
+                logger.info(f"[Quota] Limiting {sensor_type} data from {total_count} to {quota_limit} points")
+                query = query.limit(quota_limit)
+        
+        readings = query.all()
+        
+        # Reverse to get chronological order
+        readings = list(reversed(readings))
         
         if not readings:
             raise HTTPException(

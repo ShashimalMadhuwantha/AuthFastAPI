@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import auth, users, devices, retention
+from app.api.v1 import auth, users, devices, retention, quota
 from app.db.database import engine, Base
 from app.core.logger import logger
 from app.services.mqtt_service import mqtt_service
@@ -46,6 +46,7 @@ app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["User Management"])
 app.include_router(devices.router, prefix="/api/v1/devices", tags=["Devices & Sensors"])
 app.include_router(retention.router, prefix="/api/v1/retention", tags=["Data Retention"])
+app.include_router(quota.router, prefix="/api/v1/quota", tags=["Data Quota"])
 
 logger.info("FastAPI application started successfully")
 
